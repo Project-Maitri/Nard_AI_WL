@@ -1,0 +1,159 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "theme": {
+          "type": "string"
+        },
+        "uiLang": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "voiceAlertLang": {
+          "type": "string"
+        },
+        "premiumVoice": {
+          "type": "string"
+        },
+        "speechRate": {
+          "type": "number"
+        },
+        "trialEnd": {
+          "type": "number"
+        },
+        "subscriptionStatus": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["theme", "uiLang"]
+    },
+    "DigitalIdentity": {
+      "title": "DigitalIdentity",
+      "description": "Digital Identity for Bots/Client configurations",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "brandName": {
+          "type": "string"
+        },
+        "botName": {
+          "type": "string"
+        },
+        "customInstructions": {
+          "type": "string"
+        },
+        "clientUpiId": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["userId"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Saved chats for users",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "messages": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["userId", "title"]
+    },
+    "Inventory": {
+      "title": "Inventory",
+      "description": "Client Inventory Items",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array"
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["userId"]
+    },
+    "GlobalConfig": {
+      "title": "GlobalConfig",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "paymentUpi": { "type": "string" },
+        "pricingBasic": { "type": "number" },
+        "pricingPro": { "type": "number" },
+        "pricingUltra": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/global_config/main": {
+      "schema": {
+        "$ref": "#/entities/GlobalConfig"
+      },
+      "description": "Global settings editable by admins"
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "User profiles"
+    },
+    "/users/{userId}/digitalIdentities/{identityId}": {
+      "schema": {
+        "$ref": "#/entities/DigitalIdentity"
+      },
+      "description": "Digital identities created by the user"
+    },
+    "/users/{userId}/inventory/{inventoryId}": {
+      "schema": {
+        "$ref": "#/entities/Inventory"
+      },
+      "description": "User inventory"
+    },
+    "/users/{userId}/chats/{chatId}": {
+      "schema": {
+        "$ref": "#/entities/Chat"
+      },
+      "description": "Chats belonging to the user"
+    }
+  }
+}

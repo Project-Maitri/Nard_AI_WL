@@ -1,0 +1,10 @@
+{
+  "name": "Nard- White Label ",
+  "description": "",
+  "requestFramePermissions": [
+    "microphone",
+    "screen-wake-lock",
+    "display-capture",
+    "camera"
+  ]
+}

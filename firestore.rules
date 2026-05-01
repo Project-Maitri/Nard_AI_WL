@@ -1,0 +1,99 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+
+    // Validation Blueprint for User
+    function isValidUser(data) {
+      return data.keys().hasAll(['theme', 'uiLang', 'updatedAt']) 
+        && data.theme is string && data.theme.size() <= 20
+        && data.uiLang is string && data.uiLang.size() <= 20
+        && data.updatedAt == request.time
+        && (!('userName' in data.keys()) || (data.userName is string && data.userName.size() <= 100))
+        && (!('voiceAlertLang' in data.keys()) || (data.voiceAlertLang is string && data.voiceAlertLang.size() <= 20))
+        && (!('premiumVoice' in data.keys()) || (data.premiumVoice is string && data.premiumVoice.size() <= 100))
+        && (!('speechRate' in data.keys()) || data.speechRate is number)
+        && (!('createdAt' in data.keys()) || data.createdAt is timestamp);
+    }
+
+    // Validation Blueprint for DigitalIdentity
+    function isValidDigitalIdentity(data) {
+      return data.keys().hasAll(['userId', 'updatedAt'])
+        && data.userId is string && data.userId == request.auth.uid
+        && data.updatedAt == request.time
+        && (!('brandName' in data.keys()) || (data.brandName is string && data.brandName.size() <= 100))
+        && (!('botName' in data.keys()) || (data.botName is string && data.botName.size() <= 100))
+        && (!('customInstructions' in data.keys()) || (data.customInstructions is string && data.customInstructions.size() <= 5000))
+        && (!('clientUpiId' in data.keys()) || (data.clientUpiId is string && data.clientUpiId.size() <= 200))
+        && (!('logoUrl' in data.keys()) || (data.logoUrl is string && data.logoUrl.size() <= 2000));
+    }
+
+    // Validation Blueprint for Chat
+    function isValidChat(data) {
+      return data.keys().hasAll(['userId', 'title', 'updatedAt'])
+        && data.userId is string && data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 200
+        && data.updatedAt == request.time
+        && (!('messages' in data.keys()) || (data.messages is list && data.messages.size() <= 100))
+        && (!('createdAt' in data.keys()) || data.createdAt is timestamp);
+    }
+
+    // Validation Blueprint for Inventory
+    function isValidInventory(data) {
+      return data.keys().hasAll(['userId', 'updatedAt'])
+        && data.userId is string && data.userId == request.auth.uid
+        && data.updatedAt == request.time
+        && (!('items' in data.keys()) || (data.items is list && data.items.size() <= 600));
+    }
+
+    match /global_config/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn() && incoming().keys().hasOnly(['businessName', 'paymentUpi', 'pricingBasic', 'pricingPro', 'pricingUltra', 'updatedAt']);
+    }
+
+    // Path definitions
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().createdAt == request.time && incoming().keys().hasOnly(['theme', 'uiLang', 'userName', 'voiceAlertLang', 'premiumVoice', 'speechRate', 'createdAt', 'updatedAt', 'trialEnd', 'subscriptionStatus', 'email']);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['theme', 'uiLang', 'userName', 'voiceAlertLang', 'premiumVoice', 'speechRate', 'updatedAt', 'trialEnd', 'subscriptionStatus']);
+    
+      match /digitalIdentities/{identityId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(identityId);
+        allow list: if isOwner(userId) && isValidId(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(identityId) && isValidDigitalIdentity(incoming()) && incoming().keys().hasOnly(['userId', 'brandName', 'botName', 'customInstructions', 'clientUpiId', 'logoUrl', 'updatedAt']);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(identityId) && isValidDigitalIdentity(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['brandName', 'botName', 'customInstructions', 'clientUpiId', 'logoUrl', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(identityId);
+      }
+
+      match /inventory/{inventoryId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(inventoryId);
+        allow list: if isOwner(userId) && isValidId(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(inventoryId) && isValidInventory(incoming()) && incoming().keys().hasOnly(['userId', 'items', 'updatedAt']);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(inventoryId) && isValidInventory(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['items', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(inventoryId);
+      }
+
+      match /chats/{chatId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(chatId);
+        allow list: if isOwner(userId) && isValidId(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(chatId) && isValidChat(incoming()) && incoming().keys().hasOnly(['userId', 'title', 'messages', 'createdAt', 'updatedAt']) && incoming().createdAt == request.time;
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(chatId) && isValidChat(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'messages', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(chatId);
+      }
+    }
+  }
+}

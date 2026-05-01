@@ -1,0 +1,463 @@
+export const landingTranslations: Record<string, any> = {
+  en: {
+    heroTitle1: "Your Brand.",
+    heroTitle2: "Our AI Voice.",
+    heroSubtitle:
+      "Deploy a human-like, conversational AI built for your specific vertical. Experience ultra-low latency voice interactions right out of the box.",
+    heroBtn: "Get Your Custom Nard Now",
+    feat1Title: "Conversational Friend",
+    feat1Desc:
+      "A digital companion for your customers, answering 24/7 in their language via Chat & Voice.",
+    feat2Title: "Business Manager",
+    feat2Desc:
+      "Your sales agent that talks to customers, takes their numbers, and gives immediate WhatsApp alerts.",
+    feat3Title: "Commerce Expert",
+    feat3Desc:
+      "Your digital cashier that takes orders, confirms bank payments via UPI, and provides receipts.",
+    previewSubtitle:
+      "The world's first AI inspired by collaboration and friendship.",
+    previewTitle1: "Try a",
+    previewTitle2: "Live Preview",
+    dashTitle1: "Analytics &",
+    dashTitle2: "Insights",
+    stats: {
+      consults: "Total Consultations",
+      satisfaction: "User Satisfaction",
+      sessions: "Active Sessions",
+      respTime: "Avg. Response Time",
+    },
+    chart1: "Consultation Trajectory",
+    chart2: "Top Topics Discussed",
+    industries: {
+      agriculture: { name: "Agriculture", tagline: "Empowering Farmers" },
+      medical: { name: "Medical", tagline: "Caring for Patients" },
+      education: { name: "Education", tagline: "Guiding Students" },
+      business: { name: "Business", tagline: "Scaling Enterprises" },
+      finance: { name: "Finance", tagline: "Securing Wealth" },
+      retail: { name: "Retail", tagline: "Connecting Buyers" },
+      livePreview: "Live Preview",
+    },
+  },
+  hi: {
+    heroTitle1: "आपका ब्रांड.",
+    heroTitle2: "हमारी एआई आवाज़.",
+    heroSubtitle:
+      "अपने व्यवसाय के लिए इंसान जैसी, बात करने वाली एआई तैनात करें। बेहतरीन और तेज़ वॉयस चैटिंग का अनुभव लें।",
+    heroBtn: "अपना कस्टम नॉर्ड अभी पाएं",
+    feat1Title: "सहयोगी मित्र",
+    feat1Desc:
+      "आपके ग्राहकों के लिए एक डिजिटल साथी, जो उनकी भाषा में 24/7 जवाब देगा (Chat & Voice)।",
+    feat2Title: "बिजनेस मैनेजर",
+    feat2Desc:
+      "आपका सेल्स एजेंट, जो ग्राहकों से बात करेगा, नंबर लेगा और तुरंत WhatsApp जानकारी देगा।",
+    feat3Title: "कॉमर्स एक्सपर्ट",
+    feat3Desc:
+      "आपका डिजिटल कैशियर, जो ऑर्डर लेगा, सीधे बैंक पेमेंट कन्फर्म करेगा और रसीद देगा।",
+    previewSubtitle:
+      "विश्व का पहला एआई जो 'सहयोग' और 'मैत्री' के संस्कारों से प्रेरित है।",
+    previewTitle1: "एक",
+    previewTitle2: "लाइव प्रीव्यू आज़माएं",
+    dashTitle1: "एनालिटिक्स एवं",
+    dashTitle2: "इनसाइट्स",
+    stats: {
+      consults: "कुल परामर्श",
+      satisfaction: "उपयोगकर्ता संतुष्टि",
+      sessions: "सक्रिय सेशन",
+      respTime: "औसत रिस्पांस समय",
+    },
+    chart1: "परामर्श की प्रगति",
+    chart2: "चर्चा किए गए मुख्य विषय",
+    industries: {
+      agriculture: { name: "कृषि", tagline: "किसानों को सशक्त बनाना" },
+      medical: { name: "चिकित्सा", tagline: "मरीजों की देखभाल" },
+      education: { name: "शिक्षा", tagline: "छात्रों का मार्गदर्शन" },
+      business: { name: "व्यापार", tagline: "उद्यमों का विस्तार" },
+      finance: { name: "फाइनेंस", tagline: "वित्तीय प्रबंधन" },
+      retail: { name: "रिटेल", tagline: "ग्राहकों से जुड़ना" },
+      livePreview: "लाइव देखें",
+    },
+  },
+  bho: {
+    heroTitle1: "रउर ब्रांड.",
+    heroTitle2: "हमार एआई आवाज़.",
+    heroSubtitle:
+      "आपन बिजनेस खातिर इंसान नियर बात करे वाला एआई लगायीं। बिना कवनो देरी के एकदम नीक वॉयस चैटिंग के मज़ा लीं।",
+    heroBtn: "आपन कस्टम नॉर्ड अभी पाईं",
+    feat1Title: "पूरा प्राइवेसी",
+    feat1Desc:
+      "रउर डेटा सुरक्षित बा। हमनी के पूरा सुरक्षा आ प्राइवेसी के गारंटी देत बानी जा।",
+    feat2Title: "नैतिक एआई",
+    feat2Desc:
+      "'मैत्रीतंत्र' पर आधारित निष्पक्ष सहयोग। बिना कवनो भेदभाव के सही लॉजिक।",
+    feat3Title: "तुरंत डिप्लॉयमेंट",
+    feat3Desc: "बिना कोड के 5 मिनट में राउर एआई लाइव। तुरंत चालू करीं।",
+    previewSubtitle:
+      "दुनिया के पहिला एआई जे 'सहयोग' आ 'मैत्री' के संस्कार से बनल बा।",
+    previewTitle1: "एक ठो",
+    previewTitle2: "लाइव प्रीव्यू देखीं",
+    dashTitle1: "एनालिटिक्स आ",
+    dashTitle2: "इनसाइट्स",
+    stats: {
+      consults: "कुल परामर्श",
+      satisfaction: "यूजर संतुष्टि",
+      sessions: "चालू सेशन",
+      respTime: "औसत रिस्पांस समय",
+    },
+    chart1: "परामर्श के जानकारी",
+    chart2: "खास बातचीत के विषय",
+    industries: {
+      agriculture: { name: "खेती", tagline: "किसान के मजबूती" },
+      medical: { name: "मेडिकल", tagline: "मरीज के देखभाल" },
+      education: { name: "शिक्षा", tagline: "छात्र के मार्गदर्शन" },
+      business: { name: "व्यापार", tagline: "बिजनेस बढ़ावल" },
+      finance: { name: "फाइनेंस", tagline: "पइसा करब सुरक्षित" },
+      retail: { name: "रिटेल", tagline: "ग्राहकन से जुड़ल" },
+      livePreview: "लाइव देखीं",
+    },
+  },
+  bn: {
+    heroTitle1: "আপনার ব্র্যান্ড.",
+    heroTitle2: "আমাদের এআই ভয়েস.",
+    heroSubtitle:
+      "আপনার ব্যবসার জন্য মানুষের মতো কথা বলা এআই তৈরি করুন। অতি দ্রুত ভয়েস চ্যাটিং উপভোগ করুন।",
+    heroBtn: "আপনার কাস্টম নর্ড এখনই পান",
+    feat1Title: "সম্পূর্ণ গোপনীয়তা",
+    feat1Desc:
+      "আপনার ডেটা সম্পূর্ণ সুরক্ষিত। আমরা সম্পূর্ণ নিরাপত্তা এবং গোপনীয়তা নিশ্চিত করি।",
+    feat2Title: "নৈতিক এআই",
+    feat2Desc:
+      "বন্ধুত্বপূর্ণ নীতির উপর ভিত্তি করে পক্ষপাতহীন, স্বচ্ছ এবং সুষ্ঠু যুক্তি।",
+    feat3Title: "তাত্ক্ষণিক স্থাপনা",
+    feat3Desc:
+      "কোনো কোড ছাড়াই ৫ মিনিটে আপনার নিজস্ব এআই লাইভ। এখনই শুরু করুন।",
+    previewSubtitle:
+      "বিশ্বের প্রথম এআই যা 'সহযোগিতা' এবং 'বন্ধুত্ব' দ্বারা অনুপ্রাণিত।",
+    previewTitle1: "একটি",
+    previewTitle2: "লাইভ প্রিভিউ দেখুন",
+    dashTitle1: "অ্যানালিটিক্স ও",
+    dashTitle2: "ইনসাইটস",
+    stats: {
+      consults: "মোট পরামর্শ",
+      satisfaction: "ব্যবহারকারীর সন্তুष्टि",
+      sessions: "সক্রিয় সেশন",
+      respTime: "গড় প্রতিক্রিয়া সময়",
+    },
+    chart1: "পরামর্শের অগ্রগতি",
+    chart2: "শীর্ষ আলোচনার বিষয়",
+    industries: {
+      agriculture: { name: "কৃষি", tagline: "কৃষকদের ক্ষমতায়ন" },
+      medical: { name: "চিকিৎসা", tagline: "রোগীদের যত্ন নেওয়া" },
+      education: { name: "শিক্ষা", tagline: "শিক্ষার্থীদের গাইড করা" },
+      business: { name: "ব্যবসা", tagline: "উদ্যোগ সম্প্রসারণ" },
+      finance: { name: "ফিনান্স", tagline: "সম্পদ সুরক্ষিত করা" },
+      retail: { name: "খুচরা", tagline: "ক্রেতাদের সংযুক্ত করা" },
+      livePreview: "লাইভ প্রিভিউ",
+    },
+  },
+  ta: {
+    heroTitle1: "உங்கள் பிராண்ட்.",
+    heroTitle2: "எங்கள் AI குரல்.",
+    heroSubtitle:
+      "உங்கள் வணிகத்திற்கான மனிதனைப் போன்ற உரையாடல் AI-ஐப் பயன்படுத்துங்கள். மிகக் குறைந்த தாமதத்துடன் குரல் உரையாடல்களை அனுபவியுங்கள்.",
+    heroBtn: "உங்கள் தனிப்பயன் நார்டை இப்போதே பெறுங்கள்",
+    feat1Title: "முழுமையான தனியுரிமை",
+    feat1Desc:
+      "உங்கள் தரவு பாதுகாப்பாக உள்ளது. நாங்கள் முழுமையான பாதுகாப்பையும் ரகசியத்தன்மையையும் உறுதிசெய்கிறோம்.",
+    feat2Title: "நெறிமுறை AI",
+    feat2Desc:
+      "நட்புக் கொள்கைகளின் அடிப்படையில் பக்கச்சார்பற்ற, வெளிப்படையான மற்றும் நியாயமான தர்க்கம்.",
+    feat3Title: "உடனடி வரிசைப்படுத்தல்",
+    feat3Desc:
+      "குறியீடு தேவையில்லை. 5 நிமிடங்களில் உங்கள் AI-ஐ நேரலையாக்குங்கள்.",
+    previewSubtitle:
+      "ஒத்துழைப்பு மற்றும் நட்பால் ஈர்க்கப்பட்ட உலகின் முதல் AI.",
+    previewTitle1: "ஒரு",
+    previewTitle2: "நேரலை மாதிரிக்காட்சியைப் பார்க்கவும்",
+    dashTitle1: "பகுப்பாய்வு &",
+    dashTitle2: "நுண்ணறிவு",
+    stats: {
+      consults: "மொத்த ஆலோசனைகள்",
+      satisfaction: "பயனர் திருப்தி",
+      sessions: "செயலில் உள்ள அமர்வுகள்",
+      respTime: "சராசரி பதில் நேரம்",
+    },
+    chart1: "ஆலோசனை போக்கு",
+    chart2: "முக்கிய தலைப்புகள்",
+    industries: {
+      agriculture: { name: "விவசாயம்", tagline: "விவசாயிகளுக்கு அதிகாரம்" },
+      medical: { name: "மருத்துவம்", tagline: "நோயாளிகளைப் பராமரித்தல்" },
+      education: { name: "கல்வி", tagline: "மாணவர்களுக்கு வழிகாட்டுதல்" },
+      business: { name: "வணிகம்", tagline: "நிறுவனங்களை வளர்த்தல்" },
+      finance: { name: "நிதி", tagline: "செல்வத்தைப் பாதுகாத்தல்" },
+      retail: { name: "சில்லறை", tagline: "வாங்குபவர்களை இணைத்தல்" },
+      livePreview: "நேரலை",
+    },
+  },
+  te: {
+    heroTitle1: "మీ బ్రాండ్.",
+    heroTitle2: "మా AI వాయిస్.",
+    heroSubtitle:
+      "మీ వ్యాపారం కోసం మనిషి లాంటి సంభాషణ AIని ఉపయోగించండి. అతి తక్కువ జాప్యంతో వాయిస్ చాటింగ్‌ని ఆస్వాదించండి.",
+    heroBtn: "మీ అనుకూల నార్డ్‌ను ఇప్పుడే పొందండి",
+    feat1Title: "పూర్తి గోప్యత",
+    feat1Desc:
+      "మీ డేటా సురక్షితం. మేము సంపూర్ణ భద్రత మరియు గోప్యతను నిర్ధారిస్తాము.",
+    feat2Title: "నైతిక AI",
+    feat2Desc:
+      "స్నేహపూర్వక సూత్రాల ఆధారంగా నిష్పాక్షికమైన, పారదర్శకమైన మరియు న్యాయమైన తర్కం.",
+    feat3Title: "తక్షణ విస్తరణ",
+    feat3Desc: "కోడ్ అవసరం లేదు. 5 నిమిషాల్లో మీ AIని ప్రత్యక్షం చేయండి.",
+    previewSubtitle:
+      "సహకారం మరియు స్నేహం ద్వారా ప్రేరణ పొందిన ప్రపంచపు మొదటి AI.",
+    previewTitle1: "ఒక",
+    previewTitle2: "లైవ్ ప్రివ్యూ ప్రయత్నించండి",
+    dashTitle1: "విశ్లేషణలు &",
+    dashTitle2: "అంతర్దృష్టులు",
+    stats: {
+      consults: "మొత్తం సంప్రదింపులు",
+      satisfaction: "వినియోగదారుల సంతృప్తి",
+      sessions: "క్రియాశీల సెషన్‌లు",
+      respTime: "సగటు ప్రతిస్పందన సమయం",
+    },
+    chart1: "సంప్రదింపుల ధోరణి",
+    chart2: "ప్రధాన అంశాలు",
+    industries: {
+      agriculture: { name: "వ్యవసాయం", tagline: "రైతులకు సాధికారత" },
+      medical: { name: "వైద్యం", tagline: "రోగుల సంరక్షణ" },
+      education: { name: "విద్య", tagline: "విద్యార్థులకు మార్గదర్శకత్వం" },
+      business: { name: "వ్యాపారం", tagline: "సంస్థల విస్తరణ" },
+      finance: { name: "ఫైనాన్స్", tagline: "సంపద నిర్వహణ" },
+      retail: { name: "రిటైల్", tagline: "కొనుగోలుదారులను కనెక్ట్ చేయడం" },
+      livePreview: "లైవ్ ప్రివ్యూ",
+    },
+  },
+  mr: {
+    heroTitle1: "तुमचा ब्रँड.",
+    heroTitle2: "आमचा AI आवाज.",
+    heroSubtitle:
+      "तुमच्या व्यवसायासाठी माणसासारखा बोलणारा AI तयार करा. अतिशय जलद आणि सुरळीत व्हॉइस संवादाचा अनुभव घ्या.",
+    heroBtn: "तुमचा कस्टम नॉर्ड आता मिळवा",
+    feat1Title: "संपूर्ण प्रायव्हसी",
+    feat1Desc:
+      "तुमचा डेटा सुरक्षित आहे. आम्ही संपूर्ण सुरक्षा आणि गोपनीयतेची खात्री देतो.",
+    feat2Title: "नैतिक AI",
+    feat2Desc:
+      "मैत्री आणि सहकार्यावर आधारित निष्पक्ष, पारदर्शक आणि योग्य लॉजिक.",
+    feat3Title: "त्वरित अंमलबजावणी",
+    feat3Desc:
+      "कोणत्याही कोडिंगशिवाय 5 मिनिटांत तुमचा AI लाइव्ह. ताबडतोब सुरू करा.",
+    previewSubtitle:
+      "सहकार्य आणि मैत्रीच्या मूल्यांनी प्रेरित जगातील पहिला AI.",
+    previewTitle1: "एक",
+    previewTitle2: "लाइव्ह प्रिव्ह्यू पहा",
+    dashTitle1: "अॅनालिटिक्स आणि",
+    dashTitle2: "इनसाइट्स",
+    stats: {
+      consults: "एकूण सल्लामसलत",
+      satisfaction: "वापरकर्ता समाधान",
+      sessions: "सक्रिय सेशन्स",
+      respTime: "सरासरी प्रतिसाद वेळ",
+    },
+    chart1: "सल्लामसलत कल",
+    chart2: "चर्चा केलेले प्रमुख विषय",
+    industries: {
+      agriculture: { name: "कृषी", tagline: "शेतकऱ्यांचे सक्षमीकरण" },
+      medical: { name: "वैद्यकीय", tagline: "रुग्णांची काळजी" },
+      education: { name: "शिक्षण", tagline: "विद्यार्थ्यांना मार्गदर्शन" },
+      business: { name: "व्यवसाय", tagline: "उद्योगांचा विस्तार" },
+      finance: { name: "फायनान्स", tagline: "संपत्ती सुरक्षित करणे" },
+      retail: { name: "रिटेल", tagline: "ग्राहकांशी जोडणे" },
+      livePreview: "लाइव्ह प्रिव्ह्यू",
+    },
+  },
+  gu: {
+    heroTitle1: "તમારી બ્રાન્ડ.",
+    heroTitle2: "અમારો AI અવાજ.",
+    heroSubtitle:
+      "તમારા વ્યવસાય માટે માણસ જેવો વાત કરતો AI તૈયાર કરો. અતિ ઝડપી અને સરળ વૉઇસ વાર્તાલાપનો અનુભવ લો.",
+    heroBtn: "તમારો કસ્ટમ નૉર્ડ અત્યારે જ મેળવો",
+    feat1Title: "સંપૂર્ણ ગોપનીયતા",
+    feat1Desc:
+      "તમારો ડેટા સુરક્ષિત છે. અમે સંપૂર્ણ સુરક્ષા અને ગોપનીયતાની ખાતરી આપીએ છીએ.",
+    feat2Title: "નૈતિક AI",
+    feat2Desc: "મિત્રતા અને સહકાર પર આધારિત નિષ્પક્ષ, પારદર્શક અને યોગ્ય તર્ક.",
+    feat3Title: "તાત્કાલિક અમલીકરણ",
+    feat3Desc: "કોઈપણ કોડિંગ વિના 5 મિનિટમાં તમારો AI લાઇવ. તરત જ શરૂ કરો.",
+    previewSubtitle: "સહકાર અને મિત્રતાના મૂલ્યોથી પ્રેરિત વિશ્વનો પ્રથમ AI.",
+    previewTitle1: "એક",
+    previewTitle2: "લાઇવ પ્રિવ્યૂ જુઓ",
+    dashTitle1: "એનાલિટિક્સ અને",
+    dashTitle2: "ઇનસાઇટ્સ",
+    stats: {
+      consults: "કુલ પરામર્શ",
+      satisfaction: "વપરાશકર્તા સંતોષ",
+      sessions: "સક્રિય સેશન્સ",
+      respTime: "સરેરાશ પ્રતિભાવ સમય",
+    },
+    chart1: "પરામર્શ વલણ",
+    chart2: "ચર્ચા કરેલા મુખ્ય વિષયો",
+    industries: {
+      agriculture: { name: "કૃષિ", tagline: "ખેડૂતોનું સશક્તિકરણ" },
+      medical: { name: "તબીબી", tagline: "દર્દીઓની સંભાળ" },
+      education: { name: "શિક્ષણ", tagline: "વિદ્યાર્થીઓને માર્ગદર્શન" },
+      business: { name: "વ્યવસાય", tagline: "ઉદ્યોગોનો વિસ્તાર" },
+      finance: { name: "ફાઇનાન્સ", tagline: "સંપત્તિ સુરક્ષિત કરવી" },
+      retail: { name: "રિટેલ", tagline: "ગ્રાહકોને જોડવા" },
+      livePreview: "લાઇવ પ્રિવ્યૂ",
+    },
+  },
+  kn: {
+    heroTitle1: "ನಿಮ್ಮ ಬ್ರ್ಯಾಂಡ್.",
+    heroTitle2: "ನಮ್ಮ AI ಧ್ವನಿ.",
+    heroSubtitle:
+      "ನಿಮ್ಮ ವ್ಯಾಪಾರಕ್ಕಾಗಿ ಮಾನವನ-ರೀತಿಯ ಸಂಭಾಷಣಾ AI ಅನ್ನು ನಿಯೋಜಿಸಿ. ಅತಿ-ಕಡಿಮೆ ವಿಳಂಬದ ಧ್ವನಿ ಸಂವಾದಗಳನ್ನು ಅನುಭವಿಸಿ.",
+    heroBtn: "ನಿಮ್ಮ ಕಸ್ಟಮ್ ನಾರ್ಡ್ ಅನ್ನು ಈಗಲೇ ಪಡೆಯಿರಿ",
+    feat1Title: "ಸಂಪೂರ್ಣ ಗೌಪ್ಯತೆ",
+    feat1Desc:
+      "ನಿಮ್ಮ ಡೇಟಾ ಸುರಕ್ಷಿತವಾಗಿದೆ. ನಾವು ಸಂಪೂರ್ಣ ಭದ್ರತೆ ಮತ್ತು ಗೌಪ್ಯತೆಯನ್ನು ಖಚಿತಪಡಿಸುತ್ತೇವೆ.",
+    feat2Title: "ನೈತಿಕ AI",
+    feat2Desc:
+      "ಸ್ನೇಹಪರ ತತ್ವಗಳ ಆಧಾರದ ಮೇಲೆ ಪಕ್ಷಪಾತವಿಲ್ಲದ, ಪಾರದರ್ಶಕ ಮತ್ತು ನ್ಯಾಯಯುತ ತರ್ಕ.",
+    feat3Title: "ತಕ್ಷಣದ ನಿಯೋಜನೆ",
+    feat3Desc: "ಯಾವುದೇ ಕೋಡ್ ಅಗತ್ಯವಿಲ್ಲ. 5 ನಿಮಿಷಗಳಲ್ಲಿ ನಿಮ್ಮ AI ಲೈವ್ ಆಗುತ್ತದೆ.",
+    previewSubtitle: "ಸಹಕಾರ ಮತ್ತು ಸ್ನೇಹದಿಂದ ಪ್ರೇರಿತವಾದ ವಿಶ್ವದ ಮೊದಲ AI.",
+    previewTitle1: "ಒಂದು",
+    previewTitle2: "ಲೈವ್ ಪೂರ್ವವೀಕ್ಷಣೆಯನ್ನು ಪ್ರಯತ್ನಿಸಿ",
+    dashTitle1: "ವಿಶ್ಲೇಷಣೆಗಳು &",
+    dashTitle2: "ಒಳನೋಟಗಳು",
+    stats: {
+      consults: "ಒಟ್ಟು ಸಮಾಲೋಚನೆಗಳು",
+      satisfaction: "ಬಳಕೆದಾರರ ತೃಪ್ತಿ",
+      sessions: "ಸಕ್ರಿಯ ಅವಧಿಗಳು",
+      respTime: "ಸರಾಸರಿ ಪ್ರತಿಕ್ರಿಯೆ ಸಮಯ",
+    },
+    chart1: "ಸಮಾಲೋಚನೆ ಟ್ರೆಂಡ್",
+    chart2: "ಪ್ರಮುಖ ವಿಷಯಗಳು",
+    industries: {
+      agriculture: { name: "ಕೃಷಿ", tagline: "ರೈತರ ಸಬಲೀಕರಣ" },
+      medical: { name: "ವೈದ್ಯಕೀಯ", tagline: "ರೋಗಿಗಳ ಆರೈಕೆ" },
+      education: { name: "ಶಿಕ್ಷಣ", tagline: "ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಮಾರ್ಗದರ್ಶನ" },
+      business: { name: "ವ್ಯಾಪಾರ", tagline: "ಉದ್ಯಮಗಳ ವಿಸ್ತರಣೆ" },
+      finance: { name: "ಹಣಕಾಸು", tagline: "ಸಂಪತ್ತು ನಿರ್ವಹಣೆ" },
+      retail: { name: "ಚಿಲ್ಲರೆ", tagline: "ಖರೀದಿದಾರರನ್ನು ಸಂಪರ್ಕಿಸುವುದು" },
+      livePreview: "ಲೈವ್ ಪೂರ್ವವೀಕ್ಷಣೆ",
+    },
+  },
+  ml: {
+    heroTitle1: "നിങ്ങളുടെ ബ്രാൻഡ്.",
+    heroTitle2: "ഞങ്ങളുടെ AI ശബ്ദം.",
+    heroSubtitle:
+      "നിങ്ങളുടെ ബിസിനസ്സിനായി മനുഷ്യനെപ്പോലെയുള്ള ഒരു AI വിന്യസിക്കുക. അതിവേഗത്തിലുള്ള വോയിസ് ആശയവിനിമയങ്ങൾ അനുഭവിക്കുക.",
+    heroBtn: "നിങ്ങളുടെ കസ്റ്റം നോർഡ് ഇപ്പോൾ നേടുക",
+    feat1Title: "പൂർണ്ണ സ്വകാര്യത",
+    feat1Desc:
+      "നിങ്ങളുടെ ഡാറ്റ സുരക്ഷിതമാണ്. ഞങ്ങൾ സമ്പൂർണ്ണ സുരക്ഷയും രഹസ്യാത്മകതയും ഉറപ്പാക്കുന്നു.",
+    feat2Title: "ധാർമ്മിക AI",
+    feat2Desc:
+      "സൗഹൃദ തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള നിഷ്പക്ഷവും സുതാര്യവും ന്യായയുക്തവുമായ ലോജിക്.",
+    feat3Title: "തൽക്ഷണ വിന്യാസം",
+    feat3Desc:
+      "ഒരു കോഡിംഗും ആവശ്യമില്ല. 5 മിനിറ്റിനുള്ളിൽ നിങ്ങളുടെ AI ലൈവ് ആക്കുക.",
+    previewSubtitle:
+      "സഹകരണത്തിൽ നിന്നും സൗഹൃദത്തിൽ നിന്നും പ്രചോദനം ഉൾക്കൊണ്ട ലോകത്തിലെ ആദ്യത്തെ AI.",
+    previewTitle1: "ഒരു",
+    previewTitle2: "ലൈവ് പ്രിവ്യൂ കാണുക",
+    dashTitle1: "അനലിറ്റിക്സ് &",
+    dashTitle2: "ഇൻസൈറ്റുകൾ",
+    stats: {
+      consults: "മൊത്തം കൺസൾട്ടേഷനുകൾ",
+      satisfaction: "ഉപയോക്തൃ സംതൃപ്തി",
+      sessions: "സജീവ സെഷനുകൾ",
+      respTime: "ശരാശരി പ്രതികരണ സമയം",
+    },
+    chart1: "കൺസൾട്ടേഷൻ ട്രെൻഡ്",
+    chart2: "പ്രധാന വിഷയങ്ങൾ",
+    industries: {
+      agriculture: { name: "കൃഷി", tagline: "കർഷകരെ ശാക്തീകരിക്കുന്നു" },
+      medical: { name: "മെഡിക്കൽ", tagline: "രോഗികളെ പരിചരിക്കുന്നു" },
+      education: { name: "വിദ്യാഭ്യാസം", tagline: "കുട്ടികളെ നയിക്കുന്നു" },
+      business: { name: "ബിസിനസ്സ്", tagline: "സംരംഭങ്ങളെ വളർത്തുന്നു" },
+      finance: { name: "ഫിനാൻസ്", tagline: "സമ്പത്ത് സംരക്ഷിക്കൽ" },
+      retail: { name: "റീട്ടെയിൽ", tagline: "ഉപഭോക്താക്കളെ ബന്ധിപ്പിക്കുന്നു" },
+      livePreview: "ലൈവ് പ്രിവ്യൂ",
+    },
+  },
+  pa: {
+    heroTitle1: "ਤੁਹਾਡਾ ਬ੍ਰਾਂਡ.",
+    heroTitle2: "ਸਾਡੀ AI ਆਵਾਜ਼.",
+    heroSubtitle:
+      "ਆਪਣੇ ਕਾਰੋਬਾਰ ਲਈ ਇਨਸਾਨਾਂ ਵਾਂਗ ਗੱਲਬਾਤ ਕਰਨ ਵਾਲਾ AI ਤਿਆਰ ਕਰੋ। ਬਿਨਾਂ ਦੇਰੀ ਵਾਲੀ ਵੌਇਸ ਚੈਟਿੰਗ ਦਾ ਅਨੁਭਵ ਕਰੋ।",
+    heroBtn: "ਆਪਣਾ ਕਸਟਮ ਨਾਰਡ ਹੁਣੇ ਪ੍ਰਾਪਤ ਕਰੋ",
+    feat1Title: "ਮੁਕੰਮਲ ਪ੍ਰਾਈਵੇਸੀ",
+    feat1Desc:
+      "ਤੁਹਾਡਾ ਡੇਟਾ ਸੁਰੱਖਿਅਤ ਹੈ। ਅਸੀਂ ਮੁਕੰਮਲ ਸੁਰੱਖਿਆ ਅਤੇ ਗੋਪਨੀਯਤਾ ਦੀ ਗਾਰੰਟੀ ਦਿੰਦੇ ਹਾਂ।",
+    feat2Title: "ਨੈਤਿਕ AI",
+    feat2Desc: "ਮਿੱਤਰਤਾ ਅਤੇ ਸਹਿਯੋਗ 'ਤੇ ਆਧਾਰਿਤ ਨਿਰਪੱਖ, ਪਾਰਦਰਸ਼ੀ ਅਤੇ ਸਹੀ ਤਰਕ।",
+    feat3Title: "ਤੁਰੰਤ ਡਿਪਲਾਇਮੈਂਟ",
+    feat3Desc:
+      "ਕਿਸੇ ਕੋਡਿੰਗ ਤੋਂ ਬਿਨਾਂ 5 ਮਿੰਟਾਂ ਵਿੱਚ ਤੁਹਾਡਾ AI ਲਾਈਵ। ਤੁਰੰਤ ਸ਼ੁਰੂ ਕਰੋ।",
+    previewSubtitle:
+      "ਸਹਿਯੋਗ ਅਤੇ ਮਿੱਤਰਤਾ ਦੇ ਸੰਸਕਾਰਾਂ ਤੋਂ ਪ੍ਰੇਰਿਤ ਦੁਨੀਆ ਦਾ ਪਹਿਲਾ AI।",
+    previewTitle1: "ਇੱਕ",
+    previewTitle2: "ਲਾਈਵ ਪ੍ਰੀਵਿਊ ਅਜ਼ਮਾਓ",
+    dashTitle1: "ਐਨਾਲਿਟਿਕਸ ਅਤੇ",
+    dashTitle2: "ਇਨਸਾਈਟਸ",
+    stats: {
+      consults: "ਕੁੱਲ ਸਲਾਹ-ਮਸ਼ਵਰੇ",
+      satisfaction: "ਉਪਭੋਗਤਾ ਦੀ ਸੰਤੁਸ਼ਟੀ",
+      sessions: "ਸਰਗਰਮ ਸੈਸ਼ਨ",
+      respTime: "ਔਸਤ ਜਵਾਬ ਦਾ ਸਮਾਂ",
+    },
+    chart1: "ਸਲਾਹ-ਮਸ਼ਵਰੇ ਦਾ ਰੁਝਾਨ",
+    chart2: "ਚਰਚਾ ਕੀਤੇ ਗਏ ਮੁੱਖ ਵਿਸ਼ੇ",
+    industries: {
+      agriculture: { name: "ਖੇਤੀਬਾੜੀ", tagline: "ਕਿਸਾਨਾਂ ਦਾ ਸਸ਼ਕਤੀਕਰਨ" },
+      medical: { name: "ਮੈਡੀਕਲ", tagline: "ਮਰੀਜ਼ਾਂ ਦੀ ਦੇਖਭਾਲ" },
+      education: { name: "ਸਿੱਖਿਆ", tagline: "ਵਿਦਿਆਰਥੀਆਂ ਦਾ ਮਾਰਗਦਰਸ਼ਨ" },
+      business: { name: "ਕਾਰੋਬਾਰ", tagline: "ਉਦਯੋਗਾਂ ਦਾ ਵਿਸਥਾਰ" },
+      finance: { name: "ਫਾਇਨਾਂਸ", tagline: "ਦੌਲਤ ਸੁਰੱਖਿਅਤ ਕਰਨਾ" },
+      retail: { name: "ਰਿਟੇਲ", tagline: "ਗਾਹਕਾਂ ਨੂੰ ਜੋੜਨਾ" },
+      livePreview: "ਲਾਈਵ ਪ੍ਰੀਵਿਊ",
+    },
+  },
+  ur: {
+    heroTitle1: "آپ کا برانڈ.",
+    heroTitle2: "ہماری اے آئی آواز.",
+    heroSubtitle:
+      "اپنے کاروبار کے لیے انسان نما بات چیت کرنے والا اے آئی تعینات کریں۔ انتہائی تیز اور ہموار وائس چیٹنگ کا تجربہ کریں۔",
+    heroBtn: "اپنا کسٹم نارڈ ابھی حاصل کریں",
+    feat1Title: "مکمل پرائیویسی",
+    feat1Desc:
+      "آپ کا ڈیٹا محفوظ ہے۔ ہم جامع سیکیورٹی اور رازداری کو یقینی بناتے ہیں۔",
+    feat2Title: "اخلاقی اے آئی",
+    feat2Desc: "دوستی اور تعاون پر مبنی غیر جانبدار، شفاف اور منصفانہ منطق۔",
+    feat3Title: "فوری لانچ",
+    feat3Desc: "کسی کوڈ کے بغیر 5 منٹ میں آپ کا اے آئی لائیو۔ فوراً شروع کریں۔",
+    previewSubtitle: "تعاون اور دوستی کی اقدار سے متاثر دنیا کا پہلا اے آئی۔",
+    previewTitle1: "ایک",
+    previewTitle2: "لائیو پریویو آزمائیں",
+    dashTitle1: "اینالیٹکس اور",
+    dashTitle2: "انائٹس",
+    stats: {
+      consults: "کل مشاورت",
+      satisfaction: "صارف کا اطمینان",
+      sessions: "فعال سیشنز",
+      respTime: "اوسط جواب کا وقت",
+    },
+    chart1: "مشاورت کا رجحان",
+    chart2: "زیر بحث اہم موضوعات",
+    industries: {
+      agriculture: { name: "زراعت", tagline: "کسانوں کو بااختیار بنانا" },
+      medical: { name: "میڈیکل", tagline: "مریضوں کی دیکھ بھال" },
+      education: { name: "تعلیم", tagline: "طلباء کی رہنمائی" },
+      business: { name: "کاروبار", tagline: "صنعتوں کو فروغ دینا" },
+      finance: { name: "فنانس", tagline: "دولت کی حفاظت" },
+      retail: { name: "ریٹیل", tagline: "خریداروں کو جوڑنا" },
+      livePreview: "لائیو پریویو",
+    },
+  },
+};
+
+export const getLandingT = (lang: string) => {
+  return landingTranslations[lang] || landingTranslations["en"];
+};
