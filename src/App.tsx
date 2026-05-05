@@ -6,7 +6,16 @@ import React, {
   useMemo,
 } from "react";
 import { auth, db } from './firebase';
-import { onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  User as FirebaseAuthUser,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  GoogleAuthProvider,
+  signInWithPopup,
+  FacebookAuthProvider,
+  ConfirmationResult
+} from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { fetchUserData, syncUserData, fetchUserChats, syncUserChats } from './utils/firebaseSync';
 import { FirebaseSync } from './components/FirebaseSync';
@@ -76,6 +85,8 @@ import {
   Sun,
   Moon,
   CheckCircle2,
+  UserCircle2,
+  Phone,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
@@ -312,7 +323,7 @@ const AnimatedSubtitleWords = ({ text }: { text: string }) => {
             duration: 3.2,
             ease: "linear",
           }}
-          className="inline whitespace-pre-wrap mr-[0.25em]"
+          className="inline-block whitespace-pre-wrap mr-[0.25em]"
         >
           {word}
         </motion.span>
@@ -3420,6 +3431,20 @@ export default function App({ clientId }: AppProps = {}) {
     return null;
   });
 
+  const [demoBotName, setDemoBotName] = useState(() => {
+    try {
+      return safeStorage.getItem("demoBotName_v1") || "";
+    } catch (e) {
+      return "";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      safeStorage.setItem("demoBotName_v1", demoBotName);
+    } catch (e) {}
+  }, [demoBotName]);
+
   const [userName, setUserName] = useState(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -3547,8 +3572,9 @@ export default function App({ clientId }: AppProps = {}) {
       );
   }, []);
 
-  const displayBotName = selectedRole?.id === "sales" ? selectedRole.name :
-    (userName ? userName.trim() : (selectedRole ? selectedRole.name : "Nard"));
+  const displayBotName = selectedRole 
+    ? (selectedRole.id === "sales" ? selectedRole.name : (demoBotName.trim() || selectedRole.name))
+    : (userName.trim() || "Nard");
 
   useEffect(() => {
     document.title = userName
@@ -3705,10 +3731,11 @@ export default function App({ clientId }: AppProps = {}) {
 
   // Update initial message when language or bot name changes
   useEffect(() => {
+    const currentBotName = selectedRole && selectedRole.id !== "sales" ? demoBotName : userName;
     setMessages((prev) =>
       prev.map((msg) => {
         if (msg.id === "1" || msg.id === "1-model") {
-          return { ...msg, text: getInitialMessage(uiLang, userName) };
+          return { ...msg, text: getInitialMessage(uiLang, currentBotName, selectedRole) };
         }
         return msg;
       }),
@@ -3719,13 +3746,13 @@ export default function App({ clientId }: AppProps = {}) {
         ...chat,
         messages: chat.messages.map((msg) => {
           if (msg.id === "1" || msg.id === "1-model") {
-            return { ...msg, text: getInitialMessage(uiLang, userName) };
+            return { ...msg, text: getInitialMessage(uiLang, currentBotName, selectedRole) };
           }
           return msg;
         }),
       })),
     );
-  }, [uiLang, userName]);
+  }, [uiLang, userName, demoBotName, selectedRole]);
 
   useEffect(() => {
     try {
@@ -3879,6 +3906,151 @@ export default function App({ clientId }: AppProps = {}) {
   const [selectedPath, setSelectedPath] = useState<
     "widget" | "platform" | null
   >(null);
+  
+  // Auth Modal State
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingTrialPlan, setPendingTrialPlan] = useState<"basic" | "pro" | "ultra" | null>(null);
+  const [isPendingFreeTrial, setIsPendingFreeTrial] = useState(false);
+  const [authStep, setAuthStep] = useState<"method" | "phone" | "otp">("method");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authOtp, setAuthOtp] = useState(["", "", "", "", "", ""]);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const handleSelectPlan = (plan: "basic" | "pro" | "ultra", isFreeTrial: boolean) => {
+    setPendingTrialPlan(plan);
+    setIsPendingFreeTrial(isFreeTrial);
+    setAuthStep("method");
+    setAuthPhone("");
+    setAuthOtp(["", "", "", "", "", ""]);
+    setShowAuthModal(true);
+  };
+
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
+  const finishAuthAndProceed = () => {
+    setShowAuthModal(false);
+      
+    if (pendingTrialPlan) {
+      setTrialPlan(pendingTrialPlan);
+    }
+    
+    setShowPathModal(false);
+    setShowLandingPage(false);
+    setShowClientPanel(true);
+
+    if (isPendingFreeTrial) {
+      setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
+      try {
+        safeStorage.removeItem("nard_final_offer_seen");
+      } catch (e) {}
+
+      if ("speechSynthesis" in window) {
+        const msg = new SpeechSynthesisUtterance(
+          uiLang === "hi"
+            ? "लॉगिन सफल रहा। आपका फ्री ट्रायल शुरू हो गया है।"
+            : "Login successful. Your free trial has started."
+        );
+        msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
+        window.speechSynthesis.speak(msg);
+      }
+    } else {
+      if ("speechSynthesis" in window) {
+        const msg = new SpeechSynthesisUtterance(
+          uiLang === "hi"
+            ? "लॉगिन सफल रहा।"
+            : "Login successful."
+        );
+        msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
+        window.speechSynthesis.speak(msg);
+      }
+    }
+  };
+
+  const handleAuthComplete = async () => {
+    setIsAuthenticating(true);
+    setError(null);
+    try {
+      if (confirmationResult) {
+        const code = authOtp.join("");
+        await confirmationResult.confirm(code);
+        finishAuthAndProceed();
+      }
+    } catch (err: any) {
+      setError(err.message || "OTP verification failed");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsAuthenticating(true);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      finishAuthAndProceed();
+    } catch (err: any) {
+      if (err.code === 'auth/operation-not-allowed') {
+        setError(uiLang === "hi" ? "फायरबेस कंसोल में 'Google Authentication' इनेबल नहीं है।" : "Google authentication is not enabled in Firebase Console.");
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError(uiLang === "hi" ? "यह डोमेन फायरबेस में ऑथराइज्ड नहीं है।" : "This domain is not authorized in Firebase.");
+      } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        setError(err.message || "Google login failed");
+      }
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    setIsAuthenticating(true);
+    setError(null);
+    try {
+      const provider = new FacebookAuthProvider();
+      await signInWithPopup(auth, provider);
+      finishAuthAndProceed();
+    } catch (err: any) {
+      if (err.code === 'auth/operation-not-allowed') {
+        setError(uiLang === "hi" ? "फायरबेस कंसोल में 'Facebook Authentication' इनेबल नहीं है।" : "Facebook authentication is not enabled in Firebase Console.");
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError(uiLang === "hi" ? "यह डोमेन फायरबेस में ऑथराइज्ड नहीं है।" : "This domain is not authorized in Firebase.");
+      } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        setError(err.message || "Facebook login failed");
+      }
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const sendOtp = async () => {
+    setIsAuthenticating(true);
+    setError(null);
+    try {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible'
+        });
+      }
+      const formattedPhone = "+91" + authPhone;
+      const result = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      setAuthStep("otp");
+    } catch (err: any) {
+      if (err.code === 'auth/operation-not-allowed') {
+        setError(uiLang === "hi" 
+          ? "फायरबेस कंसोल में 'Phone Authentication' इनेबल नहीं है (Error: operation-not-allowed)। कृपया डेवलपर से संपर्क करें।" 
+          : "Phone authentication is not enabled in Firebase Console (Error: operation-not-allowed).");
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError(uiLang === "hi" 
+          ? "यह डोमेन फायरबेस में ऑथराइज्ड नहीं है। कृपया Firebase Console > Authentication > Settings > Authorized domains में इस URL को जोड़ें।"
+          : "This domain is not authorized. Add it in Firebase Console > Auth > Settings > Authorized domains.");
+      } else {
+        setError(err.message || "Failed to send OTP");
+      }
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   // App Tour State
   const [showTour, setShowTour] = useState(() => {
@@ -4186,6 +4358,80 @@ export default function App({ clientId }: AppProps = {}) {
   }, [messages, currentChatId]);
 
   const [isLive, setIsLive] = useState(false);
+  const [liveSessionStartIndex, setLiveSessionStartIndex] = useState(0);
+  const [liveGreetingFinished, setLiveGreetingFinished] = useState(false);
+  const [isClientSpeaking, setIsClientSpeaking] = useState(false);
+  const [isModelSpeaking, setIsModelSpeaking] = useState(false);
+  const isModelSpeakingRef = useRef(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const isVideoPlayingRef = useRef(false);
+  const liveVideoRef = useRef<HTMLVideoElement>(null);
+
+  const playPromiseRef = useRef<Promise<void> | null>(null);
+
+  useEffect(() => {
+    isVideoPlayingRef.current = isVideoPlaying;
+    const video = liveVideoRef.current;
+    if (video) {
+      // Force muted to true to appease iOS Safari policies
+      video.muted = true;
+      video.defaultMuted = true;
+
+      if (isVideoPlaying) {
+        // Track the play promise to handle interruptions
+        const promise = video.play();
+        playPromiseRef.current = promise;
+        if (promise !== undefined) {
+          promise.catch(e => {
+            if (e.name !== 'AbortError') {
+               console.warn("Video play failed", e);
+            }
+          });
+        }
+      } else {
+        // Only pause if no play is pending, or wait for it
+        if (playPromiseRef.current) {
+          playPromiseRef.current.then(() => {
+            if (!isVideoPlayingRef.current) video.pause();
+          }).catch(() => {
+            video.pause();
+          });
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }, [isVideoPlaying]);
+
+  useEffect(() => {
+    // Show video whenever the session is active and no one is currently speaking
+    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking;
+    setIsVideoPlaying(shouldPlay);
+  }, [isLive, isModelSpeaking, isClientSpeaking]);
+
+  useEffect(() => {
+    const onUserActivity = () => setIsClientSpeaking(true);
+    const onUserIdle = () => setIsClientSpeaking(false);
+    
+    window.addEventListener('live-user-activity', onUserActivity);
+    window.addEventListener('live-user-idle', onUserIdle);
+    
+    // Also trigger idle if session stops
+    if (!isLive) {
+      setIsClientSpeaking(false);
+      setLiveGreetingFinished(false);
+    }
+    
+    return () => {
+      window.removeEventListener('live-user-activity', onUserActivity);
+      window.removeEventListener('live-user-idle', onUserIdle);
+    };
+  }, [isLive]);
+
+  const liveModelResponseCount = useMemo(() => {
+    return isLive ? messages.slice(liveSessionStartIndex).filter(m => m.isLive && m.role === "model").length : 0;
+  }, [messages, isLive, liveSessionStartIndex]);
+
   const [returnToLandingOnExit, setReturnToLandingOnExit] = useState(false);
   const isLiveRef = useRef(false);
   const [hasLiveStarted, setHasLiveStarted] = useState(false);
@@ -4196,8 +4442,6 @@ export default function App({ clientId }: AppProps = {}) {
   const recognitionRef = useRef<any>(null);
   const voiceTypingTranscriptRef = useRef("");
   const continuousVoiceModeRef = useRef(false);
-  const [isModelSpeaking, setIsModelSpeaking] = useState(false);
-  const isModelSpeakingRef = useRef(false);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [playingTextIndex, setPlayingTextIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -4543,7 +4787,8 @@ export default function App({ clientId }: AppProps = {}) {
 
   // Auto-sync voice with bot name
   useEffect(() => {
-    const currentName = userName || (uiLang === "hi" ? "नॉर्ड" : "Nard");
+    const currentBotName = selectedRole && selectedRole.id !== "sales" ? demoBotName : userName;
+    const currentName = currentBotName || (uiLang === "hi" ? "नॉर्ड" : "Nard");
     const gender = guessGender(currentName);
     const expectedVoice = gender === "F" ? "Zephyr" : "Charon";
 
@@ -4557,7 +4802,7 @@ export default function App({ clientId }: AppProps = {}) {
       setPremiumVoice(expectedVoice);
       safeStorage.setItem("premiumVoice", expectedVoice);
     }
-  }, [userName, uiLang, premiumVoice]);
+  }, [userName, demoBotName, selectedRole, uiLang, premiumVoice]);
 
   // Clear setupName when userName is cleared so the setup box is empty when it reappears
   useEffect(() => {
@@ -4665,7 +4910,8 @@ export default function App({ clientId }: AppProps = {}) {
     if (isVoiceTyping) {
       stopVoiceRecognition();
     }
-    const initialMsg = getInitialMessage(uiLang, userName, selectedRole);
+    const currentBotName = selectedRole && selectedRole.id !== "sales" ? demoBotName : userName;
+    const initialMsg = getInitialMessage(uiLang, currentBotName, selectedRole);
     setMessages([
       { id: Date.now().toString(), role: "model", text: initialMsg },
     ]);
@@ -4921,6 +5167,7 @@ export default function App({ clientId }: AppProps = {}) {
   // Live API Refs
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
+
   const isInitialResumeTurnRef = useRef(false);
   const isSessionActiveRef = useRef(false);
   const liveRecapBufferRef = useRef("");
@@ -4946,6 +5193,8 @@ export default function App({ clientId }: AppProps = {}) {
     showLiveSubtitlesRef.current = showLiveSubtitles;
   }, [showLiveSubtitles]);
   const [isLiveConnecting, setIsLiveConnecting] = useState(false);
+  const [showLiveWelcomeAnimation, setShowLiveWelcomeAnimation] = useState(false);
+  const [showGreetingMessage, setShowGreetingMessage] = useState(false);
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioInput, setSelectedAudioInput] =
     useState<string>("default");
@@ -5746,7 +5995,7 @@ export default function App({ clientId }: AppProps = {}) {
       let systemInstructionStr = String(SYSTEM_INSTRUCTION);
 
       if (selectedRole) {
-        const personaBotName = userName.trim() ? userName.trim() : selectedRole.name;
+        const personaBotName = selectedRole.id === "sales" ? selectedRole.name : (demoBotName.trim() ? demoBotName.trim() : selectedRole.name);
         systemInstructionStr += `\n\nCRITICAL PERSONA OVERRIDE: Your name is ${personaBotName}. You are acting as an expert in the domain of ${selectedRole.name}. Only answer questions and provide context related to this domain. If the user asks things outside this domain, politely pivot back to your area of expertise.`;
         if (selectedRole.id === "sales") {
           systemInstructionStr += `\n\nIMPORTANT SALES OBJECTIVE: You are selling Nard's White-Labeling AI service. Explain to the user how they can use Nard as a core conversational AI on their own platforms (agritech, medtech, edtech, e-commerce, banking, etc) with their own branding. Persuade them of the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
@@ -5766,7 +6015,7 @@ export default function App({ clientId }: AppProps = {}) {
       }
 
       if (selectedRole?.id !== "sales") {
-        const currentBotName = userName.trim() ? userName.trim() : (selectedRole ? selectedRole.name : "Nard");
+        const currentBotName = selectedRole ? (demoBotName.trim() || selectedRole.name) : (userName.trim() || "Nard");
         if (currentMessages.length <= 2) {
           systemInstructionStr += `\n\nCRITICAL: Your name is ${currentBotName}. You must introduce yourself in your first response and refer to yourself using this name instead of Nard. Adopt the appropriate gender and persona matching the name '${currentBotName}', especially when speaking in languages with gendered grammar like Hindi.`;
         } else {
@@ -6091,12 +6340,23 @@ export default function App({ clientId }: AppProps = {}) {
     overrideRole?: { id: string; name: string; color: string; bg: string },
   ) => {
     if (e && typeof e.stopPropagation === "function") e.stopPropagation();
+    
+    // Explicitly unlock video playback on iOS Safari within the user gesture execution context
+    if (liveVideoRef.current) {
+      liveVideoRef.current.play().catch((err) => console.warn("Early video play unlock failed:", err));
+    }
+
     if (isSessionActiveRef.current) {
       stopLiveAudio();
       return;
     }
 
     setIsLiveConnecting(true);
+    setShowLiveWelcomeAnimation(true);
+    setShowGreetingMessage(false);
+    setLiveGreetingFinished(false);
+    setIsVideoPlaying(false);
+    setLiveSessionStartIndex(messages.length);
     stopMessageAudio();
 
     if (isVoiceTyping && recognitionRef.current) {
@@ -6406,7 +6666,7 @@ export default function App({ clientId }: AppProps = {}) {
       const currentRole = overrideRole || selectedRole;
 
       if (currentRole) {
-        const personaBotName = userName.trim() ? userName.trim() : currentRole.name;
+        const personaBotName = currentRole.id === "sales" ? currentRole.name : (demoBotName.trim() ? demoBotName.trim() : currentRole.name);
         liveInstruction += `\n\nCRITICAL PERSONA OVERRIDE: Your name is ${personaBotName}. You are now acting as ${currentRole.name}. Only answer questions and provide context related to the domain of ${currentRole.name}. If the user asks things outside this domain, politely pivot back to your area of expertise.`;
         if (currentRole.id === "sales") {
           liveInstruction += `\n\nIMPORTANT SALES OBJECTIVE: You are selling Nard's White-Labeling AI service. Explain to the user how they can use Nard as a core conversational AI on their own platforms (agritech, medtech, edtech, e-commerce, banking, etc) with their own branding. Persuade them of the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
@@ -6438,7 +6698,7 @@ export default function App({ clientId }: AppProps = {}) {
       liveInstruction += `\n\nCRITICAL: The user has selected ${currentLanguageName} as their preferred language. You MUST speak and respond ONLY in ${currentLanguageName} unless the user explicitly asks you to speak in another language.`;
 
       if (currentRole?.id !== "sales") {
-        const currentBotName = userName.trim() ? userName.trim() : (currentRole ? currentRole.name : "Nard");
+        const currentBotName = currentRole ? (demoBotName.trim() || currentRole.name) : (userName.trim() || "Nard");
         if (messages.length <= 2) {
           liveInstruction += `\n\nCRITICAL: Your name is ${currentBotName}. You must introduce yourself in your first response and refer to yourself using this name instead of Nard. Adopt the appropriate gender and persona matching the name '${currentBotName}', especially when speaking in languages with gendered grammar like Hindi.`;
         } else {
@@ -6512,7 +6772,15 @@ export default function App({ clientId }: AppProps = {}) {
             isSessionActiveRef.current = true;
             setIsSessionActive(true);
             nextAudioTimeRef.current = 0;
-            // Add a small delay before sending the initial message to ensure the connection is fully stable
+            
+            setTimeout(() => {
+              setShowLiveWelcomeAnimation(false);
+              setShowGreetingMessage(true);
+              setTimeout(() => {
+                setShowGreetingMessage(false);
+              }, 4000);
+            }, 3000);
+
             setTimeout(() => {
               if (sessionPromiseRef.current && isSessionActiveRef.current) {
                 console.log("Sending initial Live API message...");
@@ -6545,7 +6813,7 @@ export default function App({ clientId }: AppProps = {}) {
                     }
                   })
                   .catch((err) => {
-                    console.error(
+                    console.warn(
                       "Session promise rejected during initial message:",
                       err,
                     );
@@ -6555,7 +6823,7 @@ export default function App({ clientId }: AppProps = {}) {
                   "Session no longer active when trying to send initial message.",
                 );
               }
-            }, 500);
+            }, 3500);
           },
           onmessage: async (message: LiveServerMessage) => {
             if (message.serverContent?.interrupted) {
@@ -6571,6 +6839,7 @@ export default function App({ clientId }: AppProps = {}) {
               }
               isModelSpeakingRef.current = false;
               setIsModelSpeaking(false);
+              setLiveGreetingFinished(true);
               isInitialResumeTurnRef.current = false;
               liveRecapBufferRef.current = "";
             }
@@ -6719,16 +6988,17 @@ export default function App({ clientId }: AppProps = {}) {
             stopLiveAudio();
           },
           onerror: (err: any) => {
-            console.error("Live API critical error:", err);
+            console.warn("Live API critical error:", err);
             const msg = err?.message || String(err) || "Unknown Live API Error";
             if (
               msg.toLowerCase().includes("quota") ||
               msg.toLowerCase().includes("exceeded") ||
               msg.includes("429") ||
-              msg.includes("RESOURCE_EXHAUSTED")
+              msg.includes("RESOURCE_EXHAUSTED") ||
+              msg.includes("Network error")
             ) {
               setError(
-                "Live Voice Error: Gemini API quota exceeded. Providing a custom API key is required to continue.",
+                "Live Voice Error: Gemini API quota exceeded or connection blocked. Providing a custom API key is required to continue.",
               );
               if (
                 typeof window !== "undefined" &&
@@ -6748,7 +7018,7 @@ export default function App({ clientId }: AppProps = {}) {
                     } catch (e) {}
                   })
                   .catch((e2: any) =>
-                    console.error("API Key selection error:", e2),
+                    console.warn("API Key selection error:", e2),
                   );
               }
             } else {
@@ -6760,6 +7030,18 @@ export default function App({ clientId }: AppProps = {}) {
             stopLiveAudio();
           },
         },
+      });
+      sessionPromise.catch((err) => {
+         console.warn("Live API promise rejected:", err);
+         const msg = err?.message || String(err) || "";
+         if (msg.includes("Network error") || msg.toLowerCase().includes("quota")) {
+             setError("Live Voice Error: Gemini API quota exceeded or connection blocked. Providing a custom API key is required to continue.");
+         } else {
+             setError("Live Voice Connection Failed: " + msg);
+         }
+         setIsLiveConnecting(false);
+         setIsSessionActive(false);
+         isSessionActiveRef.current = false;
       });
       sessionPromiseRef.current = sessionPromise;
       setIsLive(true);
@@ -6889,8 +7171,9 @@ export default function App({ clientId }: AppProps = {}) {
         () => {
           isModelSpeakingRef.current = false;
           setIsModelSpeaking(false);
+          setLiveGreetingFinished(true);
         },
-        Math.max(0, timeUntilEnd),
+        Math.max(0, timeUntilEnd) + 500,
       );
     } catch (e) {
       console.warn("Error playing live audio:", e);
@@ -6901,6 +7184,9 @@ export default function App({ clientId }: AppProps = {}) {
     isSessionActiveRef.current = false;
     setIsSessionActive(false);
     setIsLiveConnecting(false);
+    setShowLiveWelcomeAnimation(false);
+    setShowGreetingMessage(false);
+    setIsVideoPlaying(false);
     activeAudioSourcesRef.current.forEach((source) => {
       try {
         source.stop();
@@ -6981,6 +7267,7 @@ export default function App({ clientId }: AppProps = {}) {
     }
 
     if (isModelSpeakingRef.current) {
+      setIsVideoPlaying(false);
       nextAudioTimeRef.current = 0;
       activeAudioSourcesRef.current.forEach((source) => {
         try {
@@ -6993,6 +7280,9 @@ export default function App({ clientId }: AppProps = {}) {
       }
       isModelSpeakingRef.current = false;
       setIsModelSpeaking(false);
+      setLiveGreetingFinished(true);
+    } else {
+      setIsVideoPlaying(false);
     }
   };
 
@@ -7141,12 +7431,29 @@ export default function App({ clientId }: AppProps = {}) {
 
           if (isSpeaking) {
             lastInteractionTime = Date.now();
+          } else if (react > 0.35) {
+            lastInteractionTime = Date.now();
+            if (!(window as any)._liveUserSpeakingActive) {
+                (window as any)._liveUserSpeakingActive = true;
+                window.dispatchEvent(new Event('live-user-activity'));
+            }
+            if ((window as any)._liveUserSpeakingTimeout) clearTimeout((window as any)._liveUserSpeakingTimeout);
+            (window as any)._liveUserSpeakingTimeout = setTimeout(() => {
+                (window as any)._liveUserSpeakingActive = false;
+                window.dispatchEvent(new Event('live-user-idle'));
+            }, 3000);
           }
           const isIdle = Date.now() - lastInteractionTime > 5000 && !isSpeaking;
 
           // Dynamically adjust ocean base height based on speaking state
           let targetOceanHeight = 0;
-          if (isSpeaking) {
+          if (isVideoPlayingRef.current) {
+            if (isSpeaking) {
+              targetOceanHeight = height * 0.15;
+            } else {
+              targetOceanHeight = -100;
+            }
+          } else if (isSpeaking) {
             targetOceanHeight = !showLiveSubtitlesRef.current
               ? height * 0.5
               : height * 0.2;
@@ -7422,6 +7729,22 @@ export default function App({ clientId }: AppProps = {}) {
     <div
       className={`fixed inset-0 flex flex-col overflow-hidden ${theme === "light" ? "light-theme-override" : ""}`}
     >
+      {/* HTML5 Video Background - Rendered unconditionally at the root so liveVideoRef is always available for play() unlock! */}
+      <div className={`fixed inset-0 w-full h-full pointer-events-none transition-all duration-1000 ${isLive && isVideoPlaying ? 'opacity-100 scale-100 z-[999998]' : 'opacity-0 scale-105 -z-50'}`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(16,185,129,0.15),_transparent)] bg-slate-900" />
+        <video
+          ref={liveVideoRef}
+          className="w-full h-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 object-cover opacity-60"
+          src="https://vjs.zencdn.net/v/oceans.mp4"
+          loop
+          muted
+          playsInline
+          autoPlay
+        ></video>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900" />
+        <div className="absolute inset-0 bg-black/20" />
+      </div>
+
       <FirebaseSync
         theme={theme}
         uiLang={uiLang}
@@ -7663,22 +7986,7 @@ export default function App({ clientId }: AppProps = {}) {
                 } catch (e) {}
               }}
               onStartFreeTrial={(selectedPlan) => {
-                setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
-                try {
-                  safeStorage.removeItem("nard_final_offer_seen");
-                } catch (e) {}
-                setTrialPlan(selectedPlan);
-                if ("speechSynthesis" in window) {
-                  const msg = new SpeechSynthesisUtterance(
-                    uiLang === "hi"
-                      ? "आपका दो मिनट का फ्री ट्रायल शुरू हो गया है। सभी प्रीमियम फीचर्स अब सक्रिय हैं।"
-                      : "Your two minute free trial has started. All premium features are now active.",
-                  );
-                  msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
-                  window.speechSynthesis.speak(msg);
-                }
-                setShowClientPanel(true);
-                setShowLandingPage(false);
+                handleSelectPlan(selectedPlan, true);
               }}
             />
 
@@ -8540,8 +8848,8 @@ export default function App({ clientId }: AppProps = {}) {
                       <div className="w-full max-w-md relative">
                         <input
                           type="text"
-                          value={userName}
-                          onChange={(e) => setUserName(e.target.value)}
+                          value={demoBotName}
+                          onChange={(e) => setDemoBotName(e.target.value)}
                           placeholder={uiLang === "hi" ? "अपना बाट नाम लिखें" : "Enter your bot name"}
                           className={`w-full bg-black/60 text-white border-2 border-gray-600 focus:border-transparent rounded-2xl px-6 py-4 outline-none transition-all placeholder-gray-500 text-center text-xl font-bold shadow-inner focus:ring-2 focus:ring-sky-400`}
                         />
@@ -8559,30 +8867,27 @@ export default function App({ clientId }: AppProps = {}) {
                       transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
                       className={`relative flex flex-col p-8 rounded-[60px] border ${brandTheme.accent} ${brandTheme.bg} backdrop-blur-2xl shadow-xl overflow-hidden group hover:scale-[1.02] transition-transform duration-300 text-left`}
                     >
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${brandTheme.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`}
-                      />
-                      <div
-                        className={`absolute -inset-1 bg-gradient-to-br ${brandTheme.color} blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none`}
-                      />
-
                       <div className="relative z-10 flex flex-col h-full justify-between gap-8">
                         <div>
+                          {demoBotName && (
+                            <div className={`text-xl font-bold ${brandTheme.textColors} opacity-90 mb-1`}>
+                              {demoBotName}
+                            </div>
+                          )}
                           <h3
                             className={`text-3xl md:text-4xl font-black tracking-wide ${brandTheme.textColors} ${brandTheme.dropShadow} mb-2`}
                           >
-                            {userName ? userName : role.name}
+                            {role.name}
                           </h3>
                           <p className="text-gray-300 text-lg md:text-xl font-medium">
-                            {userName ? `${role.name} - ${role.tagline}` : role.tagline}
+                            {role.tagline}
                           </p>
                         </div>
-
                         <button
                           onClick={() => {
                             const initialMsg = getInitialMessage(
                               uiLang,
-                              userName,
+                              demoBotName || role.name,
                               role,
                             );
                             setMessages([
@@ -8603,6 +8908,7 @@ export default function App({ clientId }: AppProps = {}) {
                             });
                             setReturnToLandingOnExit(true);
                             setShowLandingPage(false);
+                            setShowPathModal(false);
                             setIsLive(true);
                             if (!isSessionActiveRef.current) {
                               toggleLiveAudio(undefined, {
@@ -8621,144 +8927,6 @@ export default function App({ clientId }: AppProps = {}) {
                     </motion.div>
                   ))}
                 </div>
-              </div>
-
-              {/* Analytics Dashboard Preview */}
-              <div className="w-full text-center">
-                <h2 className="text-4xl md:text-5xl font-black text-white mb-12 font-mukta">
-                  {lT.dashTitle1}{" "}
-                  <span
-                    className={`text-transparent bg-clip-text bg-gradient-to-r ${brandTheme.color}`}
-                  >
-                    {lT.dashTitle2}
-                  </span>
-                </h2>
-
-                <div
-                  className={`relative w-full max-w-5xl mx-auto rounded-[60px] border border-gray-800 bg-gray-900/60 backdrop-blur-3xl shadow-2xl p-8 md:p-12 overflow-hidden`}
-                >
-                  <div
-                    className={`absolute -inset-24 bg-gradient-to-br ${brandTheme.color} opacity-[0.03] blur-3xl`}
-                  />
-
-                  <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-                    {[
-                      {
-                        label: lT.stats.consults,
-                        value: "45.2K",
-                        icon: <Users size={24} />,
-                      },
-                      {
-                        label: lT.stats.satisfaction,
-                        value: "98.5%",
-                        icon: <Activity size={24} />,
-                      },
-                      {
-                        label: lT.stats.sessions,
-                        value: "1,204",
-                        icon: <Radio size={24} />,
-                      },
-                      {
-                        label: lT.stats.respTime,
-                        value: "0.4s",
-                        icon: <Zap size={24} />,
-                      },
-                    ].map((stat, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-col items-center bg-gray-800/40 p-6 rounded-[32px] border border-gray-700/50"
-                      >
-                        <div className={`text-white mb-2`}>{stat.icon}</div>
-                        <h4
-                          className={`text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r ${brandTheme.color}`}
-                        >
-                          {stat.value}
-                        </h4>
-                        <span className="text-gray-400 text-sm font-medium mt-1 font-mukta">
-                          {stat.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                    <div className="flex flex-col bg-gray-800/30 p-8 rounded-[40px] border border-gray-700/50">
-                      <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-xl font-bold text-white font-mukta">
-                          {lT.chart1}
-                        </h4>
-                        <LineChart className="text-gray-400" size={24} />
-                      </div>
-                      <div className="flex items-end gap-2 h-40">
-                        {[40, 60, 45, 80, 65, 90, 75].map((height, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 rounded-t-lg bg-gray-700 relative overflow-hidden group"
-                          >
-                            <div
-                              className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${brandTheme.color} rounded-t-lg transition-all duration-1000`}
-                              style={{ height: `${height}%` }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col bg-gray-800/30 p-8 rounded-[40px] border border-gray-700/50">
-                      <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-xl font-bold text-white font-mukta">
-                          {lT.chart2}
-                        </h4>
-                        <BarChart className="text-gray-400" size={24} />
-                      </div>
-                      <div className="flex flex-col justify-center gap-4 h-40">
-                        {[
-                          {
-                            label:
-                              brandTheme.id === "agriculture"
-                                ? "Crop Disease"
-                                : brandTheme.id === "medical"
-                                  ? "Fever & Cold"
-                                  : "Admissions",
-                            value: 85,
-                          },
-                          {
-                            label:
-                              brandTheme.id === "agriculture"
-                                ? "Weather Update"
-                                : brandTheme.id === "medical"
-                                  ? "Nutrition"
-                                  : "Exams",
-                            value: 65,
-                          },
-                          {
-                            label:
-                              brandTheme.id === "agriculture"
-                                ? "Market Prices"
-                                : brandTheme.id === "medical"
-                                  ? "Mental Health"
-                                  : "Courses",
-                            value: 45,
-                          },
-                        ].map((stat, i) => (
-                          <div key={i} className="flex items-center gap-4">
-                            <span className="text-gray-400 text-sm w-32 truncate">
-                              {stat.label}
-                            </span>
-                            <div className="flex-1 h-3 rounded-full bg-gray-700 overflow-hidden">
-                              <div
-                                className={`h-full bg-gradient-to-r ${brandTheme.color} rounded-full`}
-                                style={{ width: `${stat.value}%` }}
-                              />
-                            </div>
-                            <span className="text-white text-sm font-bold w-8">
-                              {stat.value}%
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Free Trial Full Activation Widget */}
                   {freeTrialEnd === null && subscriptionStatus !== "active" && (
@@ -8806,7 +8974,6 @@ export default function App({ clientId }: AppProps = {}) {
                   </div>
                 </div>
               </div>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -8934,6 +9101,15 @@ export default function App({ clientId }: AppProps = {}) {
                 setReturnToLandingOnExit(false);
                 setShowLandingPage(false);
                 setShowPathModal(false);
+                setShowSettings(false);
+                setShowAdminPanel(false);
+                setShowClientPanel(false);
+                setShowSmsDemo(false);
+                setIsSaveModalOpen(false);
+                setIsHistoryOpen(false);
+                setShowFinalOfferPopup(false);
+                setShowLeftMenu(false);
+                setShowMoreMenu(false);
                 setIsLive(true);
                 if (!isSessionActiveRef.current) {
                   toggleLiveAudio(undefined, salesRole);
@@ -9288,10 +9464,7 @@ export default function App({ clientId }: AppProps = {}) {
                   {(["basic", "pro", "ultra"] as const).map((plan) => (
                     <button
                       key={plan}
-                      onClick={() => {
-                        setTrialPlan(plan);
-                        setShowClientPanel(true);
-                      }}
+                      onClick={() => handleSelectPlan(plan, false)}
                       className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all border ${trialPlan === plan ? "bg-emerald-600/20 border-emerald-500 text-emerald-300" : "bg-gray-950/50 border-gray-700/50 text-gray-500 hover:text-gray-300 hover:border-gray-500"}`}
                     >
                       {plan.toUpperCase()}
@@ -9301,9 +9474,7 @@ export default function App({ clientId }: AppProps = {}) {
               </div>
               {!isTrialActive ? (
                 <button
-                  onClick={() => {
-                    setShowClientPanel(true);
-                  }}
+                  onClick={() => handleSelectPlan(trialPlan, true)}
                   className="w-full sm:w-auto px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors whitespace-nowrap"
                 >
                   {uiLang === "hi" ? "ट्रायल शुरू करें" : "Start Trial"}
@@ -9353,72 +9524,6 @@ export default function App({ clientId }: AppProps = {}) {
 
                 {/* Modal Body */}
                 <div className="p-4 grid grid-cols-1 gap-4 overflow-y-auto hide-scrollbar flex-1">
-                  {/* User Name Setting */}
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-900/40 rounded-lg text-indigo-400">
-                        <User size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-gray-200 font-medium">
-                          {t.userNameLabel}
-                        </h3>
-                        <p className="text-gray-400 text-xs">
-                          {t.userNamePlaceholder}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {isEditingBotName ? (
-                        <div className="flex items-center gap-2 w-full">
-                          <input
-                            type="text"
-                            value={userName}
-                            onChange={(e) => setUserName(e.target.value)}
-                            placeholder={t.userNamePlaceholder}
-                            className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 outline-none focus:border-sky-400 transition-colors flex-1 sm:w-48"
-                            autoFocus
-                            onBlur={() => setIsEditingBotName(false)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") setIsEditingBotName(false);
-                            }}
-                          />
-                          <button
-                            onClick={() => setIsEditingBotName(false)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Save"
-                          >
-                            <Check size={18} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end bg-gray-900/60 px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors group">
-                          <span className="text-gray-200 font-medium truncate max-w-[150px]">
-                            {userName || (uiLang === "hi" ? "नॉर्ड" : "Nard")}
-                          </span>
-                          <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => setIsEditingBotName(true)}
-                              className="p-1.5 text-sky-400 hover:bg-sky-900/40 rounded-md transition-colors"
-                              title="Edit Name"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            {userName && (
-                              <button
-                                onClick={() => setUserName("")}
-                                className="p-1.5 text-red-400 hover:bg-red-900/40 rounded-md transition-colors"
-                                title="Delete/Reset Name"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
                   {/* Theme Setting */}
                   <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -10121,8 +10226,85 @@ export default function App({ clientId }: AppProps = {}) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={handleInterruption}
-              className="absolute inset-0 flex flex-col items-center justify-center z-50 overflow-hidden bg-black cursor-pointer"
+              className="fixed inset-0 flex flex-col items-center justify-center z-[999999] overflow-hidden cursor-pointer"
             >
+              {/* Nard Welcome Animation */}
+              <AnimatePresence>
+                {showLiveWelcomeAnimation && (
+                  <motion.div
+                    key="welcome-animation"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="absolute inset-0 flex flex-col items-center justify-center z-[90] pointer-events-none bg-black/80 backdrop-blur-md"
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                        className="absolute w-48 h-48 md:w-64 md:h-64 rounded-full border-t-2 border-r-2 border-emerald-400/80 shadow-[0_0_50px_rgba(52,211,153,0.4)] mix-blend-screen"
+                      />
+                      <motion.div
+                        animate={{ rotate: -360 }}
+                        transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+                        className="absolute w-56 h-56 md:w-72 md:h-72 rounded-full border-b-2 border-l-2 border-teal-500/80 shadow-[0_0_50px_rgba(20,184,166,0.3)] mix-blend-screen"
+                      />
+                      <motion.div
+                         className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-[0_0_60px_rgba(52,211,153,0.8)]"
+                         animate={{ scale: [1, 1.1, 1] }}
+                         transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                      >
+                         <Bot className="text-white drop-shadow-[0_0_10px_white] w-16 h-16 md:w-20 md:h-20" />
+                      </motion.div>
+                    </div>
+                    <motion.div
+                      animate={{ y: [0, -10, 0], opacity: [0.7, 1, 0.7] }}
+                      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                      className="mt-16 text-center"
+                    >
+                      <h2 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-300 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)] leading-tight tracking-tight">
+                        {uiLang === "hi" ? "नार्ड आपका स्वागत कर रहा है..." : "Nard is Welcoming You..."}
+                      </h2>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Greeting Message Overlay */}
+              <AnimatePresence>
+                {showGreetingMessage && (
+                  <motion.div
+                    key="greeting-message"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="absolute inset-x-0 top-1/3 flex flex-col items-center justify-center z-[85] pointer-events-none"
+                  >
+                    <div className="bg-black/60 backdrop-blur-xl px-8 py-6 rounded-[32px] border border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.2)] max-w-2xl text-center mx-4">
+                       <h3 className="text-2xl md:text-4xl font-bold text-white tracking-wide">
+                          {uiLang === "hi" ? "नमस्ते, मैं आपका वर्कस्पेस सेट कर रहा हूँ..." : "Hi there, just setting up your workspace..."}
+                       </h3>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Connecting State UI */}
+              {isLiveConnecting && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black/40 backdrop-blur-sm pointer-events-none"
+                >
+                  <Loader2 className="w-12 h-12 text-emerald-400 animate-spin mb-4" />
+                  <p className="text-emerald-400 font-mono text-sm tracking-widest animate-pulse">
+                    ESTABLISHING SECURE CONNECTION...
+                  </p>
+                </motion.div>
+              )}
+
               {/* Frequency Visualizer (Full Screen Background) */}
               <div className="absolute inset-0 w-full h-full z-0 pointer-events-none flex items-center justify-center">
                 {/* Glowing Aura */}
@@ -10302,7 +10484,13 @@ export default function App({ clientId }: AppProps = {}) {
                         )}
                       </div>
                       <span className="font-mukta font-bold text-[#00ffcc] text-xl tracking-wide opacity-90">
-                        {userName.trim() ? userName : (selectedRole ? selectedRole.name : "Nard AI")}
+                        {(() => {
+                           if (selectedRole) {
+                              if (selectedRole.id === "sales") return selectedRole.name;
+                              return demoBotName.trim() || selectedRole.name;
+                           }
+                           return userName.trim() || "Nard AI";
+                        })()}
                       </span>
                     </div>
                     <div
@@ -10316,7 +10504,7 @@ export default function App({ clientId }: AppProps = {}) {
                     >
                       <div
                         className={`max-w-none text-white font-bold font-mukta leading-tight text-center md:text-left drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] break-words ${subtitleConfig.tracking}`}
-                        style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                        style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}
                       >
                         {/* Use direct word renderer instead of ReactMarkdown for the live stream to ensure component identity stability and prevent flickering */}
                         <div
@@ -11123,6 +11311,251 @@ export default function App({ clientId }: AppProps = {}) {
         )}
       </AnimatePresence>
 
+      {/* Auth Modal Placeholder */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-2xl relative flex flex-col"
+            >
+              {/* Header */}
+              <div className="bg-gray-800/50 border-b border-gray-800 p-6 pb-4">
+                <button
+                  onClick={() => setShowAuthModal(false)}
+                  className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 text-emerald-400">
+                    <UserCircle2 size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">
+                    {uiLang === "hi" ? "लॉगिन करें" : "Welcome Back"}
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-400 text-center">
+                  {uiLang === "hi" 
+                    ? "फ्री ट्रायल शुरू करने के लिए अपना अकाउंट वेरीफाई करें"
+                    : "Verify your account to start the free trial"}
+                </p>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 flex-1 flex flex-col items-center">
+                {error && (
+                  <div className="w-full mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 text-sm flex items-start gap-2">
+                    <Info size={16} className="mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <AnimatePresence mode="wait">
+                  {authStep === "method" && (
+                    <motion.div
+                      key="step-method"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="w-full flex flex-col gap-4"
+                    >
+                      <button
+                        onClick={() => setAuthStep("phone")}
+                        className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-all border border-gray-700"
+                      >
+                        <Phone size={20} className="text-emerald-400" />
+                        {uiLang === "hi" ? "मोबाइल नंबर से लॉगिन करें" : "Continue with Mobile"}
+                      </button>
+
+                      <div className="flex items-center my-2 gap-4">
+                        <div className="flex-1 h-px bg-gray-800"></div>
+                        <span className="text-xs text-gray-500 uppercase font-black tracking-widest">
+                          {uiLang === "hi" ? "या" : "OR"}
+                        </span>
+                        <div className="flex-1 h-px bg-gray-800"></div>
+                      </div>
+
+                      <button
+                        onClick={handleGoogleLogin}
+                        className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white hover:bg-gray-100 text-black font-medium transition-all"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                          <path
+                            fill="currentColor"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          />
+                        </svg>
+                        {uiLang === "hi" ? "गूगल के साथ जारी रखें" : "Continue with Google"}
+                      </button>
+
+                      <button
+                        onClick={handleFacebookLogin}
+                        className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-medium transition-all"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                        {uiLang === "hi" ? "फेसबुक के साथ जारी रखें" : "Continue with Facebook"}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {authStep === "phone" && (
+                    <motion.div
+                      key="step-phone"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="w-full flex flex-col gap-4"
+                    >
+                      <label className="text-sm text-gray-400">
+                        {uiLang === "hi" ? "अपना मोबाइल नंबर दर्ज करें" : "Enter your mobile number"}
+                      </label>
+                      <div className="flex bg-gray-800 rounded-xl overflow-hidden border border-gray-700 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/50 transition-all">
+                         <span className="pl-4 pr-3 py-3 text-gray-400 bg-gray-800/50 flex items-center border-r border-gray-700">
+                           +91
+                         </span>
+                        <input
+                          type="tel"
+                          value={authPhone}
+                          onChange={(e) => setAuthPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          className="flex-1 bg-transparent px-4 py-3 text-white outline-none font-bold tracking-widest placeholder-gray-600"
+                          placeholder="00000 00000"
+                          autoFocus
+                        />
+                      </div>
+                      
+                      <button
+                        disabled={authPhone.length < 10}
+                        onClick={sendOtp}
+                        className={`w-full py-3 rounded-xl font-bold transition-all ${
+                          authPhone.length >= 10 
+                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/25" 
+                            : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                        }`}
+                      >
+                        {isAuthenticating ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 size={18} className="animate-spin" />
+                            {uiLang === "hi" ? "OTP भेज रहा है..." : "Sending OTP..."}
+                          </div>
+                        ) : (
+                          uiLang === "hi" ? "OTP प्राप्त करें" : "Get OTP"
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setAuthStep("method")}
+                        className="text-sm text-gray-500 hover:text-white mt-2"
+                      >
+                        {uiLang === "hi" ? "वापस जाएँ" : "Go Back"}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {authStep === "otp" && (
+                    <motion.div
+                      key="step-otp"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="w-full flex flex-col items-center gap-6"
+                    >
+                      <div className="text-center">
+                        <p className="text-sm text-gray-400 mb-1">
+                          {uiLang === "hi" ? "हमने इस नंबर पर 6-अंकीय कोड भेजा है:" : "We've sent a 6-digit code to:"}
+                        </p>
+                        <p className="text-white font-bold tracking-widest">+91 {authPhone}</p>
+                      </div>
+
+                      <div className="flex gap-2 justify-center w-full">
+                        {[0, 1, 2, 3, 4, 5].map((index) => (
+                          <input
+                            key={index}
+                            id={`otp-${index}`}
+                            type="text"
+                            maxLength={1}
+                            value={authOtp[index] || ""}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "");
+                              const newOtp = [...authOtp];
+                              newOtp[index] = val;
+                              setAuthOtp(newOtp);
+                              if (val && index < 5) {
+                                document.getElementById(`otp-${index + 1}`)?.focus();
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Backspace" && !authOtp[index] && index > 0) {
+                                document.getElementById(`otp-${index - 1}`)?.focus();
+                              }
+                            }}
+                            className="w-10 h-12 text-center text-xl font-bold bg-gray-800 border border-gray-700 text-white rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 outline-none transition-all sm:w-12 sm:h-14 sm:text-2xl"
+                            autoFocus={index === 0}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        disabled={authOtp.join("").length < 6 || isAuthenticating}
+                        onClick={handleAuthComplete}
+                        className={`w-full py-3 rounded-xl font-bold transition-all ${
+                          authOtp.join("").length === 6 
+                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/25" 
+                            : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                        }`}
+                      >
+                         {isAuthenticating ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 size={18} className="animate-spin" />
+                            {uiLang === "hi" ? "लॉगिन कर रहा है..." : "Verifying..."}
+                          </div>
+                        ) : (
+                          uiLang === "hi" ? "वेरीफाई और लॉगिन" : "Verify & Login"
+                        )}
+                      </button>
+                      
+                      <div className="flex justify-between w-full text-sm">
+                        <button
+                          onClick={() => setAuthStep("phone")}
+                          className="text-gray-500 hover:text-white"
+                        >
+                          {uiLang === "hi" ? "नंबर बदलें" : "Change Number"}
+                        </button>
+                        <button onClick={sendOtp} disabled={isAuthenticating} className="text-emerald-500 hover:text-emerald-400 disabled:text-gray-600">
+                          {uiLang === "hi" ? "OTP दोबारा भेजें" : "Resend OTP"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Dual Path Setup Modal */}
       <AnimatePresence>
         {showPathModal && (
@@ -11354,35 +11787,14 @@ export default function App({ clientId }: AppProps = {}) {
 
                       <div className="flex flex-col gap-3">
                         <button
-                          onClick={() => {
-                            setTrialPlan("basic");
-                            setShowClientPanel(true);
-                          }}
+                          onClick={() => handleSelectPlan("basic", false)}
                           className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg transition-colors border border-gray-600 shadow-sm"
                         >
                           {uiLang === "hi" ? "बेसिक चुनें" : "Start Basic"}
                         </button>
                         {!isTrialActive && subscriptionStatus !== "active" && (
                           <button
-                            onClick={() => {
-                              setTrialPlan("basic");
-                              setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
-                              try {
-                                safeStorage.removeItem("nard_final_offer_seen");
-                              } catch (e) {}
-                              setShowPathModal(false);
-                              setShowLandingPage(false);
-                              setShowClientPanel(true);
-                              if ("speechSynthesis" in window) {
-                                const msg = new SpeechSynthesisUtterance(
-                                  uiLang === "hi"
-                                    ? "आपका दो मिनट का फ्री ट्रायल शुरू हो गया है। सभी प्रीमियम फीचर्स अब सक्रिय हैं।"
-                                    : "Your two minute free trial has started. All premium features are now active.",
-                                );
-                                msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
-                                window.speechSynthesis.speak(msg);
-                              }
-                            }}
+                            onClick={() => handleSelectPlan("basic", true)}
                             className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2"
                           >
                             <Zap size={18} />
@@ -11447,10 +11859,7 @@ export default function App({ clientId }: AppProps = {}) {
 
                       <div className="flex flex-col gap-3">
                         <button
-                          onClick={() => {
-                            setTrialPlan("pro");
-                            setShowClientPanel(true);
-                          }}
+                          onClick={() => handleSelectPlan("pro", false)}
                           className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-600 to-amber-500 shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 text-white font-bold text-lg transition-all drop-shadow-md"
                         >
                           {uiLang === "hi"
@@ -11459,25 +11868,7 @@ export default function App({ clientId }: AppProps = {}) {
                         </button>
                         {!isTrialActive && subscriptionStatus !== "active" && (
                           <button
-                            onClick={() => {
-                              setTrialPlan("pro");
-                              setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
-                              try {
-                                safeStorage.removeItem("nard_final_offer_seen");
-                              } catch (e) {}
-                              setShowPathModal(false);
-                              setShowLandingPage(false);
-                              setShowClientPanel(true);
-                              if ("speechSynthesis" in window) {
-                                const msg = new SpeechSynthesisUtterance(
-                                  uiLang === "hi"
-                                    ? "आपका दो मिनट का फ्री ट्रायल शुरू हो गया है। सभी प्रीमियम फीचर्स अब सक्रिय हैं।"
-                                    : "Your two minute free trial has started. All premium features are now active.",
-                                );
-                                msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
-                                window.speechSynthesis.speak(msg);
-                              }
-                            }}
+                            onClick={() => handleSelectPlan("pro", true)}
                             className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2"
                           >
                             <Zap size={18} />
@@ -11540,35 +11931,14 @@ export default function App({ clientId }: AppProps = {}) {
 
                       <div className="flex flex-col gap-3">
                         <button
-                          onClick={() => {
-                            setTrialPlan("ultra");
-                            setShowClientPanel(true);
-                          }}
+                          onClick={() => handleSelectPlan("ultra", false)}
                           className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-sky-400 font-bold text-lg transition-colors border border-gray-600 shadow-sm hover:text-white"
                         >
                           {uiLang === "hi" ? "अल्ट्रा पर जाएं" : "Go Ultra"}
                         </button>
                         {!isTrialActive && subscriptionStatus !== "active" && (
                           <button
-                            onClick={() => {
-                              setTrialPlan("ultra");
-                              setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
-                              try {
-                                safeStorage.removeItem("nard_final_offer_seen");
-                              } catch (e) {}
-                              setShowPathModal(false);
-                              setShowLandingPage(false);
-                              setShowClientPanel(true);
-                              if ("speechSynthesis" in window) {
-                                const msg = new SpeechSynthesisUtterance(
-                                  uiLang === "hi"
-                                    ? "आपका दो मिनट का फ्री ट्रायल शुरू हो गया है। सभी प्रीमियम फीचर्स अब सक्रिय हैं।"
-                                    : "Your two minute free trial has started. All premium features are now active.",
-                                );
-                                msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
-                                window.speechSynthesis.speak(msg);
-                              }
-                            }}
+                            onClick={() => handleSelectPlan("ultra", true)}
                             className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2"
                           >
                             <Zap size={18} />
@@ -11894,6 +12264,7 @@ export default function App({ clientId }: AppProps = {}) {
           },
         ]}
       />
+      <div id="recaptcha-container"></div>
     </div>
   );
 }

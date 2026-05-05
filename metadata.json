@@ -1,6 +1,6 @@
 {
   "name": "Nard- White Label ",
-  "description": "",
+  "description": "A white-label conversational AI platform that allows businesses to deploy their own branded AI assistants for various domains like agriculture, health, and education.",
   "requestFramePermissions": [
     "microphone",
     "screen-wake-lock",

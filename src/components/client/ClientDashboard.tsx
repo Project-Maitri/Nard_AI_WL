@@ -574,12 +574,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       </div>
                       <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
                         <div className="px-4 py-3 bg-gray-900 rounded-lg font-mono text-emerald-400 break-all border border-emerald-900/30 w-full sm:w-auto flex-1">
-                          {`https://${(digitalIdentity.botName || digitalIdentity.brandName || "my-ai-bot").toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "my-ai-bot"}.nard.ai`}
+                          {`https://${(digitalIdentity.brandName || "my-ai-bot").toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "my-ai-bot"}.nard.ai`}
                         </div>
                         <div className="flex gap-2 w-full sm:w-auto shrink-0">
                           <button
                             onClick={() => {
-                              const url = `https://${(digitalIdentity.botName || digitalIdentity.brandName || "my-ai-bot").toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "my-ai-bot"}.nard.ai`;
+                              const url = `https://${(digitalIdentity.brandName || "my-ai-bot").toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "my-ai-bot"}.nard.ai`;
                               navigator.clipboard.writeText(url);
                             }}
                             className="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition-colors flex-1 flex justify-center items-center"
@@ -589,7 +589,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              const url = `https://${(digitalIdentity.botName || digitalIdentity.brandName || "my-ai-bot").toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "my-ai-bot"}.nard.ai`;
+                              const url = `https://${(digitalIdentity.brandName || "my-ai-bot").toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "my-ai-bot"}.nard.ai`;
                               if (navigator.share) {
                                 navigator.share({
                                   title: digitalIdentity.brandName || "Nard AI",
