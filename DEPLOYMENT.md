@@ -43,21 +43,34 @@ I have already created the necessary workflow files in your project under `.gith
 
 ## Step 4: Environment Variables (Critical)
 
-This app relies on several environment variables (like `GEMINI_API_KEY`). By default, GitHub Actions runs `npm run build`, which needs these variables to be present if they are used during the build process.
+This app relies on the **Gemini API Key**. 
 
-If you have any `VITE_` variables defined in `.env`, you must also add them as GitHub Secrets:
+### Which Secret to create?
+You only need to create **ONE** secret in GitHub, but I recommend creating **both** for maximum compatibility:
+1.  `VITE_GEMINI_API_KEY`: (Recommended) The standard for Vite apps.
+2.  `GEMINI_API_KEY`: (Fall-back) Used by many legacy scripts.
 
+**Value**: Use the same Gemini API key for both.
+
+### How to add them to GitHub:
 1.  Go to **Settings** > **Secrets and variables** > **Actions** on GitHub.
-2.  Add a secret for each variable (e.g., `VITE_GEMINI_API_KEY`).
-3.  Then, update the `.github/workflows/firebase-hosting-merge.yml` file to include these variables in the build step:
+2.  Click **New repository secret**.
+3.  Add `VITE_GEMINI_API_KEY` with your actual key.
+4.  Add `GEMINI_API_KEY` with the same key.
 
+### How they are used:
+- The GitHub workflow (in `.github/workflows/`) is now configured to take these secrets and "inject" them into the app during the build process (`npm run build`).
+- Once injected, the app will no longer say "AI service not initialized".
+
+### Updating the Workflow:
+I have already updated the workflow files to include the `env` block. It looks like this:
 ```yaml
       - run: npm ci && npm run build
         env:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 ```
 
-*(Note: Currently, the app is configured to fetch the Gemini token from a server route `/api/gemini-token` in production, so ensure your Firebase Functions or backend is also set up if applicable, or provide the key as a build-time variable if using a purely static site approach).*
 
 ---
 

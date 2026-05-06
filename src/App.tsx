@@ -264,16 +264,34 @@ const initAI = (key: string | null) => {
 
 const getApiKey = () => {
   let key = "";
+  
+  // 1. Check for dynamically updated key in window first
+  if ((window as any).DYNAMIC_GEMINI_API_KEY) {
+    return (window as any).DYNAMIC_GEMINI_API_KEY;
+  }
+
+  // 2. Check traditional process.env
   try {
-    key = process.env.MY_OWN_GEMINI_KEY || process.env.CUSTOM_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+    const pk = process.env.MY_OWN_GEMINI_KEY || process.env.CUSTOM_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (pk && pk !== "undefined") key = pk;
   } catch (e) {
     // Ignore error if process is not defined
+  }
+  
+  // 3. Check Vite-specific environment variables for production builds
+  if (!key) {
+    try {
+      // @ts-ignore
+      const vk = import.meta.env.VITE_GEMINI_API_KEY;
+      if (vk && vk !== "undefined") key = vk;
+    } catch (e) {}
   }
   
   if (!key) {
     // Try localStorage fallback if they provided one
     try {
-      key = localStorage.getItem("CUSTOM_GEMINI_API_KEY") || "";
+      const lk = localStorage.getItem("CUSTOM_GEMINI_API_KEY");
+      if (lk && lk !== "undefined") key = lk;
     } catch (e) {}
   }
   
@@ -7012,9 +7030,7 @@ export default function App({ clientId }: AppProps = {}) {
                       "API Key updated successfully! Please try connecting again.",
                     );
                     try {
-                      initAI(
-                        process.env.GEMINI_API_KEY || "",
-                      );
+                      initAI(getApiKey());
                     } catch (e) {}
                   })
                   .catch((e2: any) =>
@@ -7092,9 +7108,7 @@ export default function App({ clientId }: AppProps = {}) {
                   "API Key updated successfully! Please try connecting again.",
                 );
                 try {
-                  initAI(
-                    process.env.GEMINI_API_KEY || "",
-                  );
+                  initAI(getApiKey());
                 } catch (e) {}
               })
               .catch((e2: any) =>
