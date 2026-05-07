@@ -7,7 +7,6 @@ interface FirebaseSyncProps {
   theme: string;
   uiLang: string;
   userName: string;
-  voiceAlertLang: string;
   premiumVoice: string;
   speechRate: number;
   freeTrialEnd: number | null;
@@ -16,7 +15,6 @@ interface FirebaseSyncProps {
   setTheme: (t: any) => void;
   setUiLang: (l: any) => void;
   setUserName: (n: any) => void;
-  setVoiceAlertLang: (l: any) => void;
   setPremiumVoice: (v: any) => void;
   setSpeechRate: (r: any) => void;
   setFreeTrialEnd: (e: any) => void;
@@ -25,8 +23,8 @@ interface FirebaseSyncProps {
 }
 
 export const FirebaseSync: React.FC<FirebaseSyncProps> = ({
-  theme, uiLang, userName, voiceAlertLang, premiumVoice, speechRate, freeTrialEnd, subscriptionStatus, savedChats,
-  setTheme, setUiLang, setUserName, setVoiceAlertLang, setPremiumVoice, setSpeechRate, setFreeTrialEnd, setSubscriptionStatus, setSavedChats
+  theme, uiLang, userName, premiumVoice, speechRate, freeTrialEnd, subscriptionStatus, savedChats,
+  setTheme, setUiLang, setUserName, setPremiumVoice, setSpeechRate, setFreeTrialEnd, setSubscriptionStatus, setSavedChats
 }) => {
   const currentUserRef = useRef<User | null>(null);
   const initialLoadRef = useRef(true);
@@ -58,8 +56,7 @@ export const FirebaseSync: React.FC<FirebaseSyncProps> = ({
             if (data.theme) setTheme(data.theme);
             if (data.uiLang) setUiLang(data.uiLang);
             if (data.userName) setUserName(data.userName);
-            if (data.voiceAlertLang) setVoiceAlertLang(data.voiceAlertLang);
-            if (data.premiumVoice) setPremiumVoice(data.premiumVoice);
+    if (data.premiumVoice) setPremiumVoice(data.premiumVoice);
             if (data.speechRate) setSpeechRate(data.speechRate);
             if (data.trialEnd) setFreeTrialEnd(data.trialEnd);
             if (data.subscriptionStatus) setSubscriptionStatus(data.subscriptionStatus);
@@ -87,7 +84,7 @@ export const FirebaseSync: React.FC<FirebaseSyncProps> = ({
     });
 
     return () => unsubscribe();
-  }, [setFreeTrialEnd, setPremiumVoice, setSavedChats, setSpeechRate, setSubscriptionStatus, setTheme, setUiLang, setUserName, setVoiceAlertLang]);
+  }, [setFreeTrialEnd, setPremiumVoice, setSavedChats, setSpeechRate, setSubscriptionStatus, setTheme, setUiLang, setUserName]);
 
   // Sync user profile
   useEffect(() => {
@@ -100,7 +97,6 @@ export const FirebaseSync: React.FC<FirebaseSyncProps> = ({
         theme,
         uiLang,
         userName,
-        voiceAlertLang,
         premiumVoice,
         speechRate,
         trialEnd: freeTrialEnd,
@@ -108,7 +104,7 @@ export const FirebaseSync: React.FC<FirebaseSyncProps> = ({
         updatedAt: serverTimestamp()
       }, { merge: true }).catch(console.error);
     }
-  }, [theme, uiLang, userName, voiceAlertLang, premiumVoice, speechRate, freeTrialEnd, subscriptionStatus]);
+  }, [theme, uiLang, userName, premiumVoice, speechRate, freeTrialEnd, subscriptionStatus]);
 
   // Sync chats
   useEffect(() => {

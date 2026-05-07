@@ -85,6 +85,7 @@ import {
   Sun,
   Moon,
   CheckCircle2,
+  BarChart3,
   UserCircle2,
   Phone,
 } from "lucide-react";
@@ -4086,8 +4087,7 @@ export default function App({ clientId }: AppProps = {}) {
     } catch (e) {}
   };
 
-  // Nard SMS Integration States
-  const [showSmsDemo, setShowSmsDemo] = useState(false);
+  // Removed Nard SMS Integration States
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showClientPanel, setShowClientPanel] = useState(() => {
     return (
@@ -4139,117 +4139,6 @@ export default function App({ clientId }: AppProps = {}) {
       if (timer) clearTimeout(timer);
     };
   }, [activeProductPopup]);
-  const [smsPermissionGranted, setSmsPermissionGranted] = useState(false);
-  const [smsData, setSmsData] = useState<{
-    utr: string;
-    amount: string;
-  } | null>(null);
-  const [voiceAlertEnabled, setVoiceAlertEnabled] = useState(true);
-  const [voiceAlertLang, setVoiceAlertLang] = useState<"en" | "hi">(() => {
-    return (safeStorage.getItem("voiceAlertLang_v1") as "en" | "hi") || "hi";
-  });
-
-  useEffect(() => {
-    safeStorage.setItem("voiceAlertLang_v1", voiceAlertLang);
-  }, [voiceAlertLang]);
-  const [isPlayingVoiceAlert, setIsPlayingVoiceAlert] = useState(false);
-
-  // Auto-generate SMS logic
-  useEffect(() => {
-    if (!smsPermissionGranted) return;
-    const interval = setInterval(() => {
-      const amounts = [100, 250, 500, 1000, 1500, 2000, 5000];
-      const randomAmount =
-        amounts[Math.floor(Math.random() * amounts.length)].toString();
-      const randomUtr = Math.floor(
-        100000000000 + Math.random() * 900000000000,
-      ).toString();
-      setSmsData({ utr: randomUtr, amount: randomAmount });
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [smsPermissionGranted]);
-
-  const voiceAlertEnabledRef = useRef(voiceAlertEnabled);
-  useEffect(() => {
-    voiceAlertEnabledRef.current = voiceAlertEnabled;
-  }, [voiceAlertEnabled]);
-
-  // Voice Alert Audio Effect
-  useEffect(() => {
-    if (!smsData || !voiceAlertEnabledRef.current) return;
-
-    let isCancelled = false;
-
-    const playAlert = async () => {
-      setIsPlayingVoiceAlert(true);
-
-      // Maitri Jingle
-      try {
-        const AudioContextClass =
-          window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioContextClass) {
-          const audioCtx = new AudioContextClass();
-          const playNote = (freq: number, time: number, dur: number) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(freq, time);
-
-            gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(0.4, time + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(time);
-            osc.stop(time + dur);
-          };
-
-          const now = audioCtx.currentTime;
-          playNote(523.25, now, 0.4); // C5
-          playNote(659.25, now + 0.3, 0.6); // E5
-
-          await new Promise((r) => setTimeout(r, 1200));
-        }
-      } catch (e) {
-        console.error("Audio Context Error", e);
-      }
-
-      if (isCancelled) return;
-
-      // TTS
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utrLast4 = smsData.utr.slice(-4);
-        const text =
-          voiceAlertLang === "hi"
-            ? `नमस्ते! आपको ${smsData.amount} रुपये का नया सहयोग प्राप्त हुआ है। यूटीआर नंबर ${utrLast4} है।`
-            : `Hello! You have received a new payment of ${smsData.amount} rupees. UTR number ends with ${utrLast4}.`;
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = voiceAlertLang === "hi" ? "hi-IN" : "en-IN";
-        utterance.rate = 0.9;
-
-        utterance.onend = () => {
-          if (!isCancelled) setIsPlayingVoiceAlert(false);
-        };
-        utterance.onerror = () => {
-          if (!isCancelled) setIsPlayingVoiceAlert(false);
-        };
-
-        window.speechSynthesis.speak(utterance);
-      } else {
-        setIsPlayingVoiceAlert(false);
-      }
-    };
-
-    playAlert();
-
-    return () => {
-      isCancelled = true;
-      setIsPlayingVoiceAlert(false);
-    };
-  }, [smsData, voiceAlertLang]);
 
   useEffect(() => {
     if (showLandingPage) {
@@ -4421,11 +4310,7 @@ export default function App({ clientId }: AppProps = {}) {
     }
   }, [isVideoPlaying]);
 
-  useEffect(() => {
-    // Show video whenever the session is active and no one is currently speaking
-    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking;
-    setIsVideoPlaying(shouldPlay);
-  }, [isLive, isModelSpeaking, isClientSpeaking]);
+ 
 
   useEffect(() => {
     const onUserActivity = () => setIsClientSpeaking(true);
@@ -4621,7 +4506,6 @@ export default function App({ clientId }: AppProps = {}) {
   const showFinalOfferPopupRef = useRef(showFinalOfferPopup);
   const showAdminPanelRef = useRef(showAdminPanel);
   const showClientPanelRef = useRef(showClientPanel);
-  const showSmsDemoRef = useRef(showSmsDemo);
   const isSaveModalOpenRef = useRef(isSaveModalOpen);
   const isHistoryOpenRef = useRef(isHistoryOpen);
 
@@ -4633,7 +4517,6 @@ export default function App({ clientId }: AppProps = {}) {
     showFinalOfferPopupRef.current = showFinalOfferPopup;
     showAdminPanelRef.current = showAdminPanel;
     showClientPanelRef.current = showClientPanel;
-    showSmsDemoRef.current = showSmsDemo;
     isSaveModalOpenRef.current = isSaveModalOpen;
     isHistoryOpenRef.current = isHistoryOpen;
   }, [
@@ -4644,7 +4527,6 @@ export default function App({ clientId }: AppProps = {}) {
     showFinalOfferPopup,
     showAdminPanel,
     showClientPanel,
-    showSmsDemo,
     isSaveModalOpen,
     isHistoryOpen,
   ]);
@@ -4658,7 +4540,6 @@ export default function App({ clientId }: AppProps = {}) {
   const prevShowFinalOfferPopupRef = useRef(false);
   const prevShowAdminPanelRef = useRef(false);
   const prevShowClientPanelRef = useRef(false);
-  const prevShowSmsDemoRef = useRef(false);
   const prevIsSaveModalOpenRef = useRef(false);
   const prevIsHistoryOpenRef = useRef(false);
 
@@ -4700,7 +4581,6 @@ export default function App({ clientId }: AppProps = {}) {
     );
     syncHistoryEntry(showAdminPanel, prevShowAdminPanelRef, "adminPanel");
     syncHistoryEntry(showClientPanel, prevShowClientPanelRef, "clientPanel");
-    syncHistoryEntry(showSmsDemo, prevShowSmsDemoRef, "smsDemo");
     syncHistoryEntry(isSaveModalOpen, prevIsSaveModalOpenRef, "saveModal");
     syncHistoryEntry(isHistoryOpen, prevIsHistoryOpenRef, "historyModal");
 
@@ -4732,7 +4612,6 @@ export default function App({ clientId }: AppProps = {}) {
     showFinalOfferPopup,
     showAdminPanel,
     showClientPanel,
-    showSmsDemo,
     isSaveModalOpen,
     isHistoryOpen,
   ]);
@@ -4751,8 +4630,6 @@ export default function App({ clientId }: AppProps = {}) {
         setIsSaveModalOpen(false);
       } else if (isHistoryOpenRef.current) {
         setIsHistoryOpen(false);
-      } else if (showSmsDemoRef.current) {
-        setShowSmsDemo(false);
       } else if (showAdminPanelRef.current) {
         setShowAdminPanel(false);
       } else if (showClientPanelRef.current) {
@@ -5205,17 +5082,44 @@ export default function App({ clientId }: AppProps = {}) {
   const isMicMutedRef = useRef(false);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [showAudioSettings, setShowAudioSettings] = useState(false);
-  const [showLiveSubtitles, setShowLiveSubtitles] = useState(true);
-  const showLiveSubtitlesRef = useRef(true);
-  useEffect(() => {
-    showLiveSubtitlesRef.current = showLiveSubtitles;
-  }, [showLiveSubtitles]);
+
   const [isLiveConnecting, setIsLiveConnecting] = useState(false);
   const [showLiveWelcomeAnimation, setShowLiveWelcomeAnimation] = useState(false);
   const [showGreetingMessage, setShowGreetingMessage] = useState(false);
+  const [showPromoImage, setShowPromoImage] = useState(false);
+  const showPromoImageRef = useRef(false);
+  const [hasShownPromoImage, setHasShownPromoImage] = useState(false);
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioInput, setSelectedAudioInput] =
     useState<string>("default");
+
+  // Trigger promo image after the first live greeting finishes
+  useEffect(() => {
+    if (isLive && liveGreetingFinished && !hasShownPromoImage) {
+      setHasShownPromoImage(true);
+      setShowPromoImage(true);
+      showPromoImageRef.current = true;
+      setTimeout(() => {
+        setShowPromoImage(false);
+        showPromoImageRef.current = false;
+      }, 10000);
+    }
+  }, [isLive, liveGreetingFinished, hasShownPromoImage]);
+
+  // Reset flag when live disconnects or starts connecting
+  useEffect(() => {
+    if (isLiveConnecting) {
+      setHasShownPromoImage(false);
+      setShowPromoImage(false);
+      showPromoImageRef.current = false;
+    }
+  }, [isLiveConnecting]);
+
+  useEffect(() => {
+    // Show video whenever the session is active and no one is currently speaking
+    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showGreetingMessage && !showLiveWelcomeAnimation;
+    setIsVideoPlaying(shouldPlay);
+  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showGreetingMessage, showLiveWelcomeAnimation]);
 
   // TTS Refs
   const ttsAudioContextRef = useRef<AudioContext | null>(null);
@@ -6545,6 +6449,7 @@ export default function App({ clientId }: AppProps = {}) {
               if (
                 sessionPromiseRef.current &&
                 !isMicMutedRef.current &&
+                !showPromoImageRef.current &&
                 isSessionActiveRef.current
               ) {
                 sessionPromiseRef.current
@@ -6635,6 +6540,7 @@ export default function App({ clientId }: AppProps = {}) {
             if (
               sessionPromiseRef.current &&
               !isMicMutedRef.current &&
+              !showPromoImageRef.current &&
               isSessionActiveRef.current
             ) {
               sessionPromiseRef.current
@@ -6841,7 +6747,7 @@ export default function App({ clientId }: AppProps = {}) {
                   "Session no longer active when trying to send initial message.",
                 );
               }
-            }, 3500);
+            }, 7000);
           },
           onmessage: async (message: LiveServerMessage) => {
             if (message.serverContent?.interrupted) {
@@ -7200,6 +7106,7 @@ export default function App({ clientId }: AppProps = {}) {
     setIsLiveConnecting(false);
     setShowLiveWelcomeAnimation(false);
     setShowGreetingMessage(false);
+    setShowPromoImage(false);
     setIsVideoPlaying(false);
     activeAudioSourcesRef.current.forEach((source) => {
       try {
@@ -7468,9 +7375,7 @@ export default function App({ clientId }: AppProps = {}) {
               targetOceanHeight = -100;
             }
           } else if (isSpeaking) {
-            targetOceanHeight = !showLiveSubtitlesRef.current
-              ? height * 0.5
-              : height * 0.2;
+            targetOceanHeight = height * 0.25;
           } else if (!isIdle) {
             targetOceanHeight = height * 0.28;
           } else {
@@ -7545,7 +7450,7 @@ export default function App({ clientId }: AppProps = {}) {
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [isLive, isModelSpeaking, showLiveSubtitles]);
+  }, [isLive, isModelSpeaking]);
 
   // Keep AudioContext alive when returning to foreground
   useEffect(() => {
@@ -7686,8 +7591,7 @@ export default function App({ clientId }: AppProps = {}) {
 
   useEffect(() => {
     // For long scrolling messages, ensure we stay at the bottom
-    // We only force scroll if it's long enough to likely overflow
-    if (liveSubtitlesRef.current && liveSubtitles.length >= 350) {
+    if (liveSubtitlesRef.current) {
       const el = liveSubtitlesRef.current;
       el.scrollTop = el.scrollHeight;
     }
@@ -7763,7 +7667,6 @@ export default function App({ clientId }: AppProps = {}) {
         theme={theme}
         uiLang={uiLang}
         userName={userName}
-        voiceAlertLang={voiceAlertLang}
         premiumVoice={premiumVoice}
         speechRate={speechRate}
         freeTrialEnd={freeTrialEnd}
@@ -7772,7 +7675,6 @@ export default function App({ clientId }: AppProps = {}) {
         setTheme={setTheme}
         setUiLang={setUiLang}
         setUserName={setUserName}
-        setVoiceAlertLang={setVoiceAlertLang}
         setPremiumVoice={setPremiumVoice}
         setSpeechRate={setSpeechRate}
         setFreeTrialEnd={setFreeTrialEnd}
@@ -9045,7 +8947,6 @@ export default function App({ clientId }: AppProps = {}) {
             showSettings ||
             showAdminPanel ||
             showClientPanel ||
-            showSmsDemo ||
             showPathModal ||
             showFinalOfferPopup ||
             isSaveModalOpen ||
@@ -9118,7 +9019,6 @@ export default function App({ clientId }: AppProps = {}) {
                 setShowSettings(false);
                 setShowAdminPanel(false);
                 setShowClientPanel(false);
-                setShowSmsDemo(false);
                 setIsSaveModalOpen(false);
                 setIsHistoryOpen(false);
                 setShowFinalOfferPopup(false);
@@ -9591,104 +9491,6 @@ export default function App({ clientId }: AppProps = {}) {
                         <ShieldAlert size={16} className="text-rose-400" />{" "}
                         Enter Master Dashboard
                       </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex flex-col w-full">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-sky-900/40 rounded-lg text-sky-400">
-                          <Database size={20} />
-                        </div>
-                        <div>
-                          <h3 className="text-gray-200 font-medium">
-                            {uiLang === "hi"
-                              ? "नार्ड नेटिव (Android)"
-                              : "Nard Native (Android)"}
-                          </h3>
-                          <p className="text-gray-400 text-xs">
-                            {uiLang === "hi"
-                              ? "बैकग्राउंड सिंक परीक्षण"
-                              : "Background Sync Integration Test"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        <button
-                          onClick={() => {
-                            setShowSettings(false);
-                            setShowSmsDemo(true);
-                          }}
-                          className="w-full py-3 bg-gray-800 hover:bg-gray-700 rounded-[88px] font-bold text-white transition-colors border border-gray-700 shadow-sm flex items-center justify-center gap-2 text-sm"
-                        >
-                          <ShieldAlert size={16} className="text-sky-400" />{" "}
-                          {uiLang === "hi"
-                            ? "ऑटो-पेमेंट सिंक UI टेस्ट करें"
-                            : "Test Auto-Payment Sync UI"}
-                        </button>
-
-                        <div className="relative group">
-                          <button
-                            onClick={() =>
-                              setVoiceAlertEnabled(!voiceAlertEnabled)
-                            }
-                            disabled={
-                              subscriptionStatus === "inactive" &&
-                              !isTrialActive
-                            }
-                            className={`w-full py-3 rounded-[88px] font-bold transition-colors border shadow-sm flex items-center justify-center gap-2 text-sm ${subscriptionStatus === "inactive" && !isTrialActive ? "bg-gray-900/50 border-gray-800 text-gray-500 blur-[2px] pointer-events-none" : voiceAlertEnabled ? "bg-green-900/30 border-green-700/50 text-green-400 hover:bg-green-900/50" : "bg-gray-800/80 border-gray-700 text-gray-400 hover:bg-gray-700"}`}
-                          >
-                            {voiceAlertEnabled ? (
-                              <Volume2 size={16} />
-                            ) : (
-                              <VolumeX size={16} />
-                            )}
-                            {uiLang === "hi"
-                              ? "ध्वनि सूचना (Voice Alert)"
-                              : "Voice Alert (Payment)"}
-                          </button>
-
-                          {voiceAlertEnabled &&
-                            (subscriptionStatus !== "inactive" ||
-                              isTrialActive) && (
-                              <div className="flex bg-gray-900/50 rounded-full border border-gray-700 p-1 mt-2 w-full max-w-[200px] mx-auto">
-                                <button
-                                  onClick={() => setVoiceAlertLang("en")}
-                                  className={`flex-1 flex items-center justify-center text-xs py-1.5 rounded-full font-bold transition-all ${voiceAlertLang === "en" ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-300"}`}
-                                >
-                                  {uiLang === "hi" ? "अंग्रेज़ी" : "English"}
-                                </button>
-                                <button
-                                  onClick={() => setVoiceAlertLang("hi")}
-                                  className={`flex-1 flex items-center justify-center text-xs py-1.5 rounded-full font-bold transition-all ${voiceAlertLang === "hi" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-400 hover:text-gray-300"}`}
-                                >
-                                  {uiLang === "hi" ? "हिंदी" : "Hindi"}
-                                </button>
-                              </div>
-                            )}
-
-                          {subscriptionStatus === "inactive" &&
-                            !isTrialActive && (
-                              <div
-                                className="absolute inset-0 flex items-center justify-center rounded-[88px] bg-black/40 z-10 cursor-not-allowed border border-gray-700/50"
-                                onClick={() => {
-                                  setShowSettings(false);
-                                  setShowClientPanel(true);
-                                }}
-                              >
-                                <span className="text-white text-xs font-bold px-3 py-1 bg-gray-900/80 rounded-full border border-gray-700 backdrop-blur-md flex items-center gap-1">
-                                  <ShieldAlert
-                                    size={12}
-                                    className="text-indigo-400"
-                                  />{" "}
-                                  {uiLang === "hi"
-                                    ? "प्लान में अपग्रेड करें"
-                                    : "Upgrade your plan"}
-                                </span>
-                              </div>
-                            )}
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -10305,6 +10107,75 @@ export default function App({ clientId }: AppProps = {}) {
                 )}
               </AnimatePresence>
 
+              {/* Promo Image Overlay */}
+              <AnimatePresence>
+                {showPromoImage && (
+                  <motion.div
+                    key="promo-image"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, filter: "blur(20px)" }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
+                    className="absolute inset-0 flex flex-col items-center justify-center z-[84] pointer-events-none bg-black"
+                  >
+                    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden">
+                       {/* High-tech modern background image */}
+                       <img 
+                          src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop" 
+                          alt="Nard Features" 
+                          className="absolute inset-0 w-full h-full object-cover opacity-50 scale-105 transform animate-pulse"
+                          style={{ animationDuration: '4s' }}
+                       />
+                       
+                       {/* Scanning Line overlay */}
+                       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/10 to-transparent w-full h-[5%] opacity-50 animate-[scan_4s_ease-in-out_infinite]" />
+                       
+                       {/* Advanced glow effects */}
+                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,255,204,0.1)_0%,rgba(0,0,0,0.8)_80%)]" />
+
+                       <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/40 to-black/20 flex flex-col justify-center items-center p-8 md:p-12 text-center z-10">
+                          
+                          <motion.div
+                             initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+                             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                             transition={{ delay: 0.5, duration: 0.8 }}
+                             className="mb-8"
+                          >
+                            <h2 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-emerald-200 to-cyan-400 font-mukta drop-shadow-[0_0_30px_rgba(34,211,238,0.4)] tracking-wide uppercase">
+                               {uiLang === "hi" ? "नार्ड का आधुनिक बिज़नेस मॉडल" : "Nard's Modern Business Model"}
+                            </h2>
+                            <p className="mt-4 text-xl md:text-3xl text-emerald-100/80 tracking-widest uppercase font-mono">
+                               {uiLang === "hi" ? "आपके बिज़नेस को दे नई उड़ान" : "Empower Your Business"}
+                            </p>
+                          </motion.div>
+
+                          <motion.div 
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.2, duration: 0.8 }}
+                            className="flex flex-wrap justify-center gap-6 mt-8 max-w-4xl"
+                          >
+                             <div className="bg-black/50 backdrop-blur-xl px-6 py-4 border border-cyan-500/40 rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.3)] flex flex-col items-center">
+                               <Sparkles className="w-8 h-8 text-cyan-400 mb-2" />
+                               <span className="text-cyan-100 font-bold text-lg md:text-2xl uppercase tracking-wider">{uiLang === "hi" ? "रीयल-टाइम इंटेलिजेंस" : "Real-time Intelligence"}</span>
+                             </div>
+
+                             <div className="bg-black/50 backdrop-blur-xl px-6 py-4 border border-emerald-500/40 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] flex flex-col items-center">
+                               <BarChart3 className="w-8 h-8 text-emerald-400 mb-2" />
+                               <span className="text-emerald-100 font-bold text-lg md:text-2xl uppercase tracking-wider">{uiLang === "hi" ? "ऑटो-पेमेंट सिंक" : "Auto-Payment Sync"}</span>
+                             </div>
+
+                             <div className="bg-black/50 backdrop-blur-xl px-6 py-4 border border-fuchsia-500/40 rounded-2xl shadow-[0_0_20px_rgba(217,70,239,0.3)] flex flex-col items-center">
+                               <MessageSquare className="w-8 h-8 text-fuchsia-400 mb-2" />
+                               <span className="text-fuchsia-100 font-bold text-lg md:text-2xl uppercase tracking-wider">{uiLang === "hi" ? "आवाज़ आधारित AI" : "Voice-driven AI"}</span>
+                             </div>
+                         </motion.div>
+                       </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Connecting State UI */}
               {isLiveConnecting && (
                 <motion.div
@@ -10457,59 +10328,16 @@ export default function App({ clientId }: AppProps = {}) {
                 </motion.div>
               )}
 
-              {/* Invisible Subtitles Toggle Button (Function preserved as requested) */}
-              <div className="absolute top-4 right-6 z-[90] pointer-events-auto">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowLiveSubtitles((prev) => !prev);
-                  }}
-                  className="w-12 h-12 opacity-0 cursor-pointer"
-                  title="Toggle Subtitles (Invisible)"
-                  aria-label="Toggle Subtitles"
-                />
-              </div>
-
-              {showLiveSubtitles && isModelSpeaking && liveSubtitles && (
-                <div className="absolute top-10 bottom-[110px] flex-col left-4 right-4 z-[60] pointer-events-none flex justify-start items-center pb-4">
+              {isModelSpeaking && liveSubtitles && (
+                <div className="absolute top-[10%] bottom-[150px] flex-col left-4 right-4 z-[90] pointer-events-none flex justify-start items-center pb-4">
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-6 md:p-8 bg-gray-900/95 text-white backdrop-blur-md border border-[#00ffcc]/50 shadow-[0_0_20px_rgba(0,255,204,0.15)] rounded-b-[2rem] rounded-tr-[2rem] rounded-tl-[88px] w-full max-w-7xl mx-auto flex flex-col pointer-events-auto max-h-full overflow-hidden shrink min-h-0 relative"
+                    className="w-full max-w-4xl mx-auto flex flex-col pointer-events-auto max-h-full overflow-hidden shrink min-h-0 relative"
                   >
-                    <div className="flex items-center gap-3 mb-4 shrink-0 border-b border-[#00ffcc]/20 pb-3">
-                      <div className="flex items-center justify-center w-10 h-10 relative">
-                        {digitalIdentity.logoUrl || brandLogo ? (
-                          <img
-                            src={digitalIdentity.logoUrl || brandLogo!}
-                            alt="Logo"
-                            className="w-10 h-10 rounded-full object-cover border-2 border-[#00ffcc]"
-                          />
-                        ) : (
-                          <>
-                            <Flame size={32} className="relative z-10 text-[#00ffcc]" />
-                            <div className="absolute -top-2 right-0 z-20">
-                              <Sparkles
-                                size={14}
-                                className="text-white animate-pulse drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]"
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      <span className="font-mukta font-bold text-[#00ffcc] text-xl tracking-wide opacity-90">
-                        {(() => {
-                           if (selectedRole) {
-                              if (selectedRole.id === "sales") return selectedRole.name;
-                              return demoBotName.trim() || selectedRole.name;
-                           }
-                           return userName.trim() || "Nard AI";
-                        })()}
-                      </span>
-                    </div>
                     <div
                       ref={liveSubtitlesRef}
-                      className={`h-full w-full overflow-y-auto hide-scrollbar flex flex-col ${subtitleConfig.justify}`}
+                      className={`h-full w-full overflow-y-auto hide-scrollbar flex flex-col justify-start`}
                       style={{
                         maskImage: "none",
                         WebkitMaskImage: "none",
@@ -10517,12 +10345,12 @@ export default function App({ clientId }: AppProps = {}) {
                       }}
                     >
                       <div
-                        className={`max-w-none text-white font-bold font-mukta leading-tight text-center md:text-left drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] break-words ${subtitleConfig.tracking}`}
-                        style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}
+                        className={`max-w-none text-white font-bold font-mukta leading-tight text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] break-words ${subtitleConfig.tracking}`}
+                        style={{ wordBreak: 'normal', overflowWrap: 'break-word', textShadow: '0px 2px 4px rgba(0,0,0,0.8)' }}
                       >
                         {/* Use direct word renderer instead of ReactMarkdown for the live stream to ensure component identity stability and prevent flickering */}
                         <div
-                          className={`${subtitleConfig.fontSize} transition-all duration-700 ease-in-out whitespace-pre-wrap`}
+                          className={`${subtitleConfig.fontSize} transition-all duration-700 ease-in-out whitespace-pre-wrap py-8`}
                         >
                           <AnimatedSubtitleWords text={liveSubtitles} />
                         </div>
@@ -12129,122 +11957,7 @@ export default function App({ clientId }: AppProps = {}) {
         )}
       </AnimatePresence>
 
-      {/* Nard SMS Permission Modal (Glassmorphic, 88px border radius) */}
-      <AnimatePresence>
-        {showSmsDemo && !smsPermissionGranted && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-gray-900/90 border border-white/10 p-8 sm:p-10 max-w-sm w-full shadow-2xl relative overflow-hidden flex flex-col items-center text-center font-mukta"
-              style={{
-                borderRadius: "88px",
-                boxShadow:
-                  "0 20px 40px -10px rgba(0,0,0,0.8), 0 0 30px rgba(56, 189, 248, 0.15)",
-              }}
-            >
-              <div className="w-20 h-20 bg-sky-500/20 rounded-full flex flex-shrink-0 items-center justify-center mb-6">
-                <ShieldAlert className="text-sky-400 w-10 h-10 animate-pulse" />
-              </div>
-              <h3 className="text-2xl font-black text-white mb-3">
-                ऑटो-पेमेंट सिंक सक्रिय करें
-              </h3>
-              <p className="text-gray-400 mb-8 text-sm leading-relaxed">
-                नार्ड (Nard) को पृष्ठभूमि (Background) में भुगतान SMS पढ़ने की
-                अनुमति दें ताकि आपका डैशबोर्ड रीयल-टाइम में अपडेट हो सके।
-              </p>
-
-              <div className="flex flex-col gap-4 w-full px-2">
-                <button
-                  onClick={() => {
-                    setSmsPermissionGranted(true);
-                    setSmsData({
-                      utr: Math.floor(
-                        100000000000 + Math.random() * 900000000000,
-                      ).toString(),
-                      amount: "500",
-                    });
-                  }}
-                  className="py-4 w-full bg-white hover:bg-gray-100 text-black font-bold text-lg transition-transform active:scale-95"
-                  style={{ borderRadius: "88px" }}
-                >
-                  अनुमति दें (Allow)
-                </button>
-                <button
-                  onClick={() => setShowSmsDemo(false)}
-                  className="py-4 w-full bg-transparent hover:bg-white/5 border border-white/20 text-white font-bold text-lg transition-colors"
-                  style={{ borderRadius: "88px" }}
-                >
-                  बाद में
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Nard Real-time SMS Glow Status Widget */}
-      <AnimatePresence>
-        {(smsPermissionGranted || showTour) && (
-          <motion.div
-            id="tour-sync-widget"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 sm:px-6 py-3 rounded-full bg-gray-900/90 border border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.3)] backdrop-blur-xl flex items-center gap-3 w-max max-w-[90vw] relative"
-          >
-            {/* Pulse effect that runs when smsData changes */}
-            <motion.div
-              key={smsData?.utr || "empty"}
-              initial={{
-                boxShadow: "0 0 60px 10px rgba(34,197,94,0.8)",
-                opacity: 1,
-              }}
-              animate={{
-                boxShadow: "0 0 20px 0px rgba(34,197,94,0)",
-                opacity: 0,
-              }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="absolute inset-0 rounded-full pointer-events-none"
-            />
-            {isPlayingVoiceAlert && (
-              <div className="absolute -inset-1 rounded-full animate-ping border-2 border-green-400/60 pointer-events-none z-0"></div>
-            )}
-            <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse drop-shadow-[0_0_5px_rgba(34,197,94,0.8)] flex-shrink-0 z-10"></div>
-            <div className="flex flex-col md:flex-row md:items-center text-green-400 font-mono text-xs sm:text-sm whitespace-nowrap overflow-hidden z-10">
-              <span className="opacity-90">Nard Sync Active • UTR:&nbsp;</span>
-              <AnimatePresence mode="popLayout">
-                <motion.span
-                  key={smsData?.utr || "empty"}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  transition={{ duration: 0.3, type: "spring", bounce: 0.4 }}
-                  className="inline-block relative font-bold"
-                >
-                  {smsData?.utr}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-            <button
-              onClick={() => {
-                setSmsPermissionGranted(false);
-                setShowSmsDemo(false);
-              }}
-              className="ml-2 bg-white/10 hover:bg-white/20 p-1.5 rounded-full text-white transition-colors flex-shrink-0 z-10"
-              title="Stop Sync"
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Removed SMS Modal and Widget */}
 
       <AppTour
         isOpen={showTour}
