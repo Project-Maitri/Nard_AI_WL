@@ -3922,31 +3922,46 @@ export default function App({ clientId }: AppProps = {}) {
     return freeTrialEnd === null && subscriptionStatus !== "active";
   });
   const [showPathModal, setShowPathModal] = useState(false);
+  const [showFullScreenFreeTrial, setShowFullScreenFreeTrial] = useState(false);
   const [autoScrollModal, setAutoScrollModal] = useState(false);
   const [autoScrollLandingPage, setAutoScrollLandingPage] = useState(false);
 
   useEffect(() => {
     if (showPathModal && autoScrollModal) {
+      let isUserScrolling = false;
+      const userInteractionHandler = () => { isUserScrolling = true; };
+      
       const timer = setTimeout(() => {
-        const modalContent = document.getElementById("path-modal-content");
-        if (modalContent) {
-          const targetScroll =
-            modalContent.scrollHeight - modalContent.clientHeight;
-          if (targetScroll <= 0) return;
-
-          const duration = 20000;
-          const start = modalContent.scrollTop;
+        const content = document.getElementById("path-modal-content");
+        if (content) {
+          content.addEventListener("touchstart", userInteractionHandler, { passive: true });
+          content.addEventListener("wheel", userInteractionHandler, { passive: true });
+          
+          const duration = 20000; // 20 seconds total
+          const startScroll = content.scrollTop;
+          const targetScroll = content.scrollHeight - content.clientHeight;
           const startTime = performance.now();
 
           const step = (currentTime: number) => {
+            if (!autoScrollModalRef.current || isUserScrolling) {
+              content.removeEventListener("touchstart", userInteractionHandler);
+              content.removeEventListener("wheel", userInteractionHandler);
+              return;
+            }
+            
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            modalContent.scrollTop = start + (targetScroll - start) * progress;
-            if (progress < 1 && autoScrollModalRef.current) {
+            
+            // Apply smooth scroll
+            content.scrollTop = startScroll + (targetScroll - startScroll) * progress;
+
+            if (progress < 1) {
               window.requestAnimationFrame(step);
             }
           };
-          window.requestAnimationFrame(step);
+          if (targetScroll > startScroll) {
+            window.requestAnimationFrame(step);
+          }
         }
       }, 500); // slight delay to allow rendering
       return () => clearTimeout(timer);
@@ -3960,25 +3975,38 @@ export default function App({ clientId }: AppProps = {}) {
 
   useEffect(() => {
     if (showLandingPage && autoScrollLandingPage) {
+      let isUserScrolling = false;
+      const userInteractionHandler = () => { isUserScrolling = true; };
+
       const timer = setTimeout(() => {
         const content = document.getElementById("landing-page-content");
         if (content) {
-          const targetScroll = content.scrollHeight - content.clientHeight;
-          if (targetScroll <= 0) return;
+          content.addEventListener("touchstart", userInteractionHandler, { passive: true });
+          content.addEventListener("wheel", userInteractionHandler, { passive: true });
 
-          const duration = 20000;
-          const start = content.scrollTop;
+          const duration = 20000; // 20 sec
+          const startScroll = content.scrollTop;
+          const targetScroll = content.scrollHeight - content.clientHeight;
           const startTime = performance.now();
 
           const step = (currentTime: number) => {
+            if (!autoScrollLandingPageRef.current || isUserScrolling) {
+              content.removeEventListener("touchstart", userInteractionHandler);
+              content.removeEventListener("wheel", userInteractionHandler);
+              return;
+            }
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            content.scrollTop = start + (targetScroll - start) * progress;
-            if (progress < 1 && autoScrollLandingPageRef.current) {
+
+            content.scrollTop = startScroll + (targetScroll - startScroll) * progress;
+
+            if (progress < 1) {
               window.requestAnimationFrame(step);
             }
           };
-          window.requestAnimationFrame(step);
+          if (targetScroll > startScroll) {
+            window.requestAnimationFrame(step);
+          }
         }
       }, 500); 
       return () => clearTimeout(timer);
@@ -5218,7 +5246,7 @@ export default function App({ clientId }: AppProps = {}) {
           if (count === 1) {
             setShowLandingPage(true);
             showLandingPageTempRef.current = true;
-            setAutoScrollLandingPage(true);
+            setAutoScrollLandingPage(false);
           } else if (count === 2) {
             setSelectedPath(null);
             setShowPathModal(true);
@@ -5238,29 +5266,47 @@ export default function App({ clientId }: AppProps = {}) {
             setSelectedPath("platform");
             setShowPathModal(true);
             showPathModalTempRef.current = true;
-            setAutoScrollModal(false);
-          } else {
-            setSelectedPath(null);
+            setAutoScrollModal(true);
+          } else if (count === 6) {
+            setSelectedPath("platform");
             setShowPathModal(true);
             showPathModalTempRef.current = true;
             setAutoScrollModal(false);
-          }
-          
-          if (postResponseLandingTimerRef.current) {
-            clearTimeout(postResponseLandingTimerRef.current);
-          }
-          
-          postResponseLandingTimerRef.current = setTimeout(() => {
-            setShowPromoImage(false);
-            showPromoImageRef.current = false;
+          } else if (count === 7) {
+            setSelectedPath(null);
             setShowPathModal(false);
-            setAutoScrollModal(false);
             showPathModalTempRef.current = false;
+            setAutoScrollModal(false);
             setShowLandingPage(false);
             showLandingPageTempRef.current = false;
             setAutoScrollLandingPage(false);
-            setSelectedPath(null);
-          }, 20000);
+            stopLiveAudio(); // 'अब आई कोई रिस्पांस नहीं देगा'
+            setShowFullScreenFreeTrial(true);
+            
+            setTimeout(() => {
+              setShowFullScreenFreeTrial(false);
+              setSelectedPath(null);
+              setShowPathModal(true);
+            }, 20000);
+          }
+
+          if (count <= 6) {
+            if (postResponseLandingTimerRef.current) {
+              clearTimeout(postResponseLandingTimerRef.current);
+            }
+            
+            postResponseLandingTimerRef.current = setTimeout(() => {
+              setShowPromoImage(false);
+              showPromoImageRef.current = false;
+              setShowPathModal(false);
+              setAutoScrollModal(false);
+              showPathModalTempRef.current = false;
+              setShowLandingPage(false);
+              showLandingPageTempRef.current = false;
+              setAutoScrollLandingPage(false);
+              setSelectedPath(null);
+            }, 20000);
+          }
         }
       } else if (!prevIsModelSpeakingRef.current && isModelSpeaking) {
         // Model started speaking again
@@ -11627,13 +11673,13 @@ export default function App({ clientId }: AppProps = {}) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-start justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-2xl overflow-y-auto hide-scrollbar"
+            className="fixed inset-0 z-[300] flex flex-col bg-gray-950 overflow-y-auto hide-scrollbar"
           >
             <button
               onClick={() =>
                 selectedPath ? setSelectedPath(null) : setShowPathModal(false)
               }
-              className="absolute top-6 right-6 p-3 rounded-full bg-gray-800/80 hover:bg-gray-700 hover:scale-105 border border-gray-600 text-white shadow-xl transition-all z-50"
+              className="absolute top-6 right-6 p-3 rounded-full bg-gray-800/80 hover:bg-gray-700 hover:scale-105 border border-gray-600 text-white shadow-xl transition-all z-50 fixed"
             >
               <X size={24} />
             </button>
@@ -11642,7 +11688,7 @@ export default function App({ clientId }: AppProps = {}) {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-full max-w-5xl my-auto flex flex-col pt-12"
+              className="w-full max-w-7xl mx-auto flex flex-col min-h-screen pt-16 px-4 pb-12"
             >
               {!selectedPath ? (
                 <>
@@ -12174,6 +12220,61 @@ export default function App({ clientId }: AppProps = {}) {
                   </div>
                 </>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showFullScreenFreeTrial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] flex items-center justify-center p-4 sm:p-8 bg-black/95 backdrop-blur-3xl overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="w-full max-w-2xl mx-auto rounded-[44px] overflow-hidden backdrop-blur-2xl bg-black/60 border border-amber-500/30 shadow-[0_30px_60px_rgba(0,0,0,0.6)] p-8 sm:p-12 flex flex-col items-center text-center relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-amber-500/10 mix-blend-overlay pointer-events-none" />
+
+              <motion.div 
+                animate={{ scale: [1, 1.1, 1] }} 
+                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(251,191,36,0.6)]"
+              >
+                <Sparkles size={40} className="text-white fill-white" />
+              </motion.div>
+
+              <h2 className="text-4xl md:text-5xl font-black text-white font-mukta mb-4">
+                {uiLang === "hi"
+                  ? "अब आपका बिज़नेस पूरी तरह से एआई संचालित होने को तैयार है।"
+                  : "Your business is ready to be fully AI powered."}
+              </h2>
+
+              <p className="text-xl sm:text-2xl text-amber-200 mb-8 font-medium">
+                {uiLang === "hi"
+                  ? "नार्ड की शक्ति को 2 मिनट तक बिल्कुल मुफ्त अनुभव करें!"
+                  : "Experience the power of Nard free for 2 minutes!"}
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowFullScreenFreeTrial(false);
+                  setShowPathModal(true);
+                }}
+                className="relative w-full max-w-md py-4 sm:py-5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:shadow-[0_0_30px_rgba(245,158,11,0.7)] transition-all overflow-hidden group hover:-translate-y-1"
+              >
+                <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                <span className="relative flex items-center justify-center gap-2 text-lg sm:text-xl">
+                  <Zap size={24} className="fill-white" />
+                  {uiLang === "hi" ? "अपना कस्टम नार्ड पाएं" : "Get Your Custom Nard"}
+                </span>
+              </button>
             </motion.div>
           </motion.div>
         )}
