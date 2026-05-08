@@ -3922,6 +3922,41 @@ export default function App({ clientId }: AppProps = {}) {
     return freeTrialEnd === null && subscriptionStatus !== "active";
   });
   const [showPathModal, setShowPathModal] = useState(false);
+  const [autoScrollModal, setAutoScrollModal] = useState(false);
+
+  useEffect(() => {
+    if (showPathModal && autoScrollModal) {
+      const timer = setTimeout(() => {
+        const modalContent = document.getElementById("path-modal-content");
+        if (modalContent) {
+          const targetScroll =
+            modalContent.scrollHeight - modalContent.clientHeight;
+          if (targetScroll <= 0) return;
+
+          const duration = 10000;
+          const start = modalContent.scrollTop;
+          const startTime = performance.now();
+
+          const step = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            modalContent.scrollTop = start + (targetScroll - start) * progress;
+            if (progress < 1 && autoScrollModalRef.current) {
+              window.requestAnimationFrame(step);
+            }
+          };
+          window.requestAnimationFrame(step);
+        }
+      }, 500); // slight delay to allow rendering
+      return () => clearTimeout(timer);
+    }
+  }, [showPathModal, autoScrollModal]);
+  
+  const autoScrollModalRef = useRef(autoScrollModal);
+  useEffect(() => {
+    autoScrollModalRef.current = autoScrollModal;
+  }, [autoScrollModal]);
+
   const [selectedPath, setSelectedPath] = useState<
     "widget" | "platform" | null
   >(null);
@@ -4324,8 +4359,16 @@ export default function App({ clientId }: AppProps = {}) {
       }
       if (showPathModalTempRef.current) {
         setShowPathModal(false);
+        setAutoScrollModal(false);
         showPathModalTempRef.current = false;
         setSelectedPath(null);
+        if (postResponseLandingTimerRef.current) {
+          clearTimeout(postResponseLandingTimerRef.current);
+        }
+      }
+      if (showLandingPageTempRef.current) {
+        setShowLandingPage(false);
+        showLandingPageTempRef.current = false;
         if (postResponseLandingTimerRef.current) {
           clearTimeout(postResponseLandingTimerRef.current);
         }
@@ -5111,6 +5154,7 @@ export default function App({ clientId }: AppProps = {}) {
   const postResponseLandingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const liveModelTurnCountRef = useRef(0);
   const showPathModalTempRef = useRef(false);
+  const showLandingPageTempRef = useRef(false);
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioInput, setSelectedAudioInput] =
     useState<string>("default");
@@ -5133,20 +5177,34 @@ export default function App({ clientId }: AppProps = {}) {
     if (isLive) {
       if (prevIsModelSpeakingRef.current && !isModelSpeaking) {
         // Model just finished speaking
-        if (liveGreetingFinished && hasShownPromoImage && !showPromoImageRef.current && !showPathModalTempRef.current && !isClientSpeaking && !showLandingPage) {
+        if (liveGreetingFinished && hasShownPromoImage && !showPromoImageRef.current && !showPathModalTempRef.current && !showLandingPageTempRef.current && !isClientSpeaking && !showLandingPage) {
           liveModelTurnCountRef.current += 1;
+          const count = liveModelTurnCountRef.current;
           
-          if (liveModelTurnCountRef.current >= 3) {
-            setSelectedPath("platform");
-            setShowPathModal(true);
-            showPathModalTempRef.current = true;
-          } else if (liveModelTurnCountRef.current === 2) {
+          if (count === 1) {
+            setShowPromoImage(true);
+            showPromoImageRef.current = true;
+          } else if (count === 2) {
             setSelectedPath(null);
             setShowPathModal(true);
             showPathModalTempRef.current = true;
+          } else if (count === 3) {
+            setSelectedPath("platform");
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
+          } else if (count === 4) {
+            setSelectedPath(null);
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
+          } else if (count === 5) {
+            setSelectedPath("platform");
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
+            setAutoScrollModal(true);
           } else {
-            setShowPromoImage(true);
-            showPromoImageRef.current = true;
+            setSelectedPath(null);
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
           }
           
           if (postResponseLandingTimerRef.current) {
@@ -5157,12 +5215,16 @@ export default function App({ clientId }: AppProps = {}) {
             setShowPromoImage(false);
             showPromoImageRef.current = false;
             setShowPathModal(false);
+            setAutoScrollModal(false);
             showPathModalTempRef.current = false;
+            setShowLandingPage(false);
+            showLandingPageTempRef.current = false;
             setSelectedPath(null);
           }, 10000);
         }
       } else if (!prevIsModelSpeakingRef.current && isModelSpeaking) {
         // Model started speaking again
+        setAutoScrollModal(false);
         if (showPromoImageRef.current) {
            setShowPromoImage(false);
            showPromoImageRef.current = false;
@@ -5172,8 +5234,16 @@ export default function App({ clientId }: AppProps = {}) {
         }
         if (showPathModalTempRef.current) {
            setShowPathModal(false);
+           setAutoScrollModal(false);
            showPathModalTempRef.current = false;
            setSelectedPath(null);
+           if (postResponseLandingTimerRef.current) {
+             clearTimeout(postResponseLandingTimerRef.current);
+           }
+        }
+        if (showLandingPageTempRef.current) {
+           setShowLandingPage(false);
+           showLandingPageTempRef.current = false;
            if (postResponseLandingTimerRef.current) {
              clearTimeout(postResponseLandingTimerRef.current);
            }
@@ -5190,7 +5260,9 @@ export default function App({ clientId }: AppProps = {}) {
       setShowPromoImage(false);
       showPromoImageRef.current = false;
       liveModelTurnCountRef.current = 0;
+      setAutoScrollModal(false);
       showPathModalTempRef.current = false;
+      showLandingPageTempRef.current = false;
       
       if (postResponseLandingTimerRef.current) {
         clearTimeout(postResponseLandingTimerRef.current);
@@ -5200,9 +5272,9 @@ export default function App({ clientId }: AppProps = {}) {
 
   useEffect(() => {
     // Show video whenever the session is active and no one is currently speaking
-    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showGreetingMessage && !showLiveWelcomeAnimation && !showPathModal;
+    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showLandingPage && !showGreetingMessage && !showLiveWelcomeAnimation && !showPathModal;
     setIsVideoPlaying(shouldPlay);
-  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showGreetingMessage, showLiveWelcomeAnimation, showPathModal]);
+  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showLandingPage, showGreetingMessage, showLiveWelcomeAnimation, showPathModal]);
 
   // TTS Refs
   const ttsAudioContextRef = useRef<AudioContext | null>(null);
@@ -11503,6 +11575,7 @@ export default function App({ clientId }: AppProps = {}) {
       <AnimatePresence>
         {showPathModal && (
           <motion.div
+            id="path-modal-content"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
