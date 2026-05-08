@@ -3934,7 +3934,7 @@ export default function App({ clientId }: AppProps = {}) {
             modalContent.scrollHeight - modalContent.clientHeight;
           if (targetScroll <= 0) return;
 
-          const duration = 10000;
+          const duration = 20000;
           const start = modalContent.scrollTop;
           const startTime = performance.now();
 
@@ -3966,7 +3966,7 @@ export default function App({ clientId }: AppProps = {}) {
           const targetScroll = content.scrollHeight - content.clientHeight;
           if (targetScroll <= 0) return;
 
-          const duration = 10000;
+          const duration = 20000;
           const start = content.scrollTop;
           const startTime = performance.now();
 
@@ -5202,7 +5202,7 @@ export default function App({ clientId }: AppProps = {}) {
       setTimeout(() => {
         setShowPromoImage(false);
         showPromoImageRef.current = false;
-      }, 10000);
+      }, 20000);
     }
   }, [isLive, liveGreetingFinished, hasShownPromoImage, isClientSpeaking]);
 
@@ -5260,7 +5260,7 @@ export default function App({ clientId }: AppProps = {}) {
             showLandingPageTempRef.current = false;
             setAutoScrollLandingPage(false);
             setSelectedPath(null);
-          }, 10000);
+          }, 20000);
         }
       } else if (!prevIsModelSpeakingRef.current && isModelSpeaking) {
         // Model started speaking again
@@ -6648,6 +6648,8 @@ export default function App({ clientId }: AppProps = {}) {
                 sessionPromiseRef.current &&
                 !isMicMutedRef.current &&
                 !showPromoImageRef.current &&
+                !showPathModalTempRef.current &&
+                !showLandingPageTempRef.current &&
                 isSessionActiveRef.current
               ) {
                 sessionPromiseRef.current
@@ -6739,6 +6741,8 @@ export default function App({ clientId }: AppProps = {}) {
               sessionPromiseRef.current &&
               !isMicMutedRef.current &&
               !showPromoImageRef.current &&
+              !showPathModalTempRef.current &&
+              !showLandingPageTempRef.current &&
               isSessionActiveRef.current
             ) {
               sessionPromiseRef.current
