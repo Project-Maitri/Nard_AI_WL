@@ -3923,6 +3923,7 @@ export default function App({ clientId }: AppProps = {}) {
   });
   const [showPathModal, setShowPathModal] = useState(false);
   const [autoScrollModal, setAutoScrollModal] = useState(false);
+  const [autoScrollLandingPage, setAutoScrollLandingPage] = useState(false);
 
   useEffect(() => {
     if (showPathModal && autoScrollModal) {
@@ -3956,6 +3957,38 @@ export default function App({ clientId }: AppProps = {}) {
   useEffect(() => {
     autoScrollModalRef.current = autoScrollModal;
   }, [autoScrollModal]);
+
+  useEffect(() => {
+    if (showLandingPage && autoScrollLandingPage) {
+      const timer = setTimeout(() => {
+        const content = document.getElementById("landing-page-content");
+        if (content) {
+          const targetScroll = content.scrollHeight - content.clientHeight;
+          if (targetScroll <= 0) return;
+
+          const duration = 10000;
+          const start = content.scrollTop;
+          const startTime = performance.now();
+
+          const step = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            content.scrollTop = start + (targetScroll - start) * progress;
+            if (progress < 1 && autoScrollLandingPageRef.current) {
+              window.requestAnimationFrame(step);
+            }
+          };
+          window.requestAnimationFrame(step);
+        }
+      }, 500); 
+      return () => clearTimeout(timer);
+    }
+  }, [showLandingPage, autoScrollLandingPage]);
+
+  const autoScrollLandingPageRef = useRef(autoScrollLandingPage);
+  useEffect(() => {
+    autoScrollLandingPageRef.current = autoScrollLandingPage;
+  }, [autoScrollLandingPage]);
 
   const [selectedPath, setSelectedPath] = useState<
     "widget" | "platform" | null
@@ -4369,6 +4402,7 @@ export default function App({ clientId }: AppProps = {}) {
       if (showLandingPageTempRef.current) {
         setShowLandingPage(false);
         showLandingPageTempRef.current = false;
+        setAutoScrollLandingPage(false);
         if (postResponseLandingTimerRef.current) {
           clearTimeout(postResponseLandingTimerRef.current);
         }
@@ -5182,29 +5216,34 @@ export default function App({ clientId }: AppProps = {}) {
           const count = liveModelTurnCountRef.current;
           
           if (count === 1) {
-            setShowPromoImage(true);
-            showPromoImageRef.current = true;
+            setShowLandingPage(true);
+            showLandingPageTempRef.current = true;
+            setAutoScrollLandingPage(true);
           } else if (count === 2) {
             setSelectedPath(null);
             setShowPathModal(true);
             showPathModalTempRef.current = true;
+            setAutoScrollModal(true);
           } else if (count === 3) {
             setSelectedPath("platform");
             setShowPathModal(true);
             showPathModalTempRef.current = true;
+            setAutoScrollModal(true);
           } else if (count === 4) {
             setSelectedPath(null);
             setShowPathModal(true);
             showPathModalTempRef.current = true;
+            setAutoScrollModal(true);
           } else if (count === 5) {
             setSelectedPath("platform");
             setShowPathModal(true);
             showPathModalTempRef.current = true;
-            setAutoScrollModal(true);
+            setAutoScrollModal(false);
           } else {
             setSelectedPath(null);
             setShowPathModal(true);
             showPathModalTempRef.current = true;
+            setAutoScrollModal(false);
           }
           
           if (postResponseLandingTimerRef.current) {
@@ -5219,12 +5258,14 @@ export default function App({ clientId }: AppProps = {}) {
             showPathModalTempRef.current = false;
             setShowLandingPage(false);
             showLandingPageTempRef.current = false;
+            setAutoScrollLandingPage(false);
             setSelectedPath(null);
           }, 10000);
         }
       } else if (!prevIsModelSpeakingRef.current && isModelSpeaking) {
         // Model started speaking again
         setAutoScrollModal(false);
+        setAutoScrollLandingPage(false);
         if (showPromoImageRef.current) {
            setShowPromoImage(false);
            showPromoImageRef.current = false;
@@ -5244,6 +5285,7 @@ export default function App({ clientId }: AppProps = {}) {
         if (showLandingPageTempRef.current) {
            setShowLandingPage(false);
            showLandingPageTempRef.current = false;
+           setAutoScrollLandingPage(false);
            if (postResponseLandingTimerRef.current) {
              clearTimeout(postResponseLandingTimerRef.current);
            }
@@ -5261,6 +5303,7 @@ export default function App({ clientId }: AppProps = {}) {
       showPromoImageRef.current = false;
       liveModelTurnCountRef.current = 0;
       setAutoScrollModal(false);
+      setAutoScrollLandingPage(false);
       showPathModalTempRef.current = false;
       showLandingPageTempRef.current = false;
       
@@ -8093,6 +8136,7 @@ export default function App({ clientId }: AppProps = {}) {
       <AnimatePresence>
         {showLandingPage && (
           <motion.div
+            id="landing-page-content"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
