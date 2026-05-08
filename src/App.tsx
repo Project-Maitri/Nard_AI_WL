@@ -5247,50 +5247,22 @@ export default function App({ clientId }: AppProps = {}) {
             setShowLandingPage(true);
             showLandingPageTempRef.current = true;
             setAutoScrollLandingPage(false);
-          } else if (count === 2) {
-            setSelectedPath(null);
-            setShowPathModal(true);
-            showPathModalTempRef.current = true;
-            setAutoScrollModal(true);
-          } else if (count === 3) {
-            setSelectedPath("platform");
-            setShowPathModal(true);
-            showPathModalTempRef.current = true;
-            setAutoScrollModal(true);
-          } else if (count === 4) {
-            setSelectedPath(null);
-            setShowPathModal(true);
-            showPathModalTempRef.current = true;
-            setAutoScrollModal(true);
-          } else if (count === 5) {
-            setSelectedPath("platform");
-            setShowPathModal(true);
-            showPathModalTempRef.current = true;
-            setAutoScrollModal(true);
-          } else if (count === 6) {
-            setSelectedPath("platform");
-            setShowPathModal(true);
-            showPathModalTempRef.current = true;
-            setAutoScrollModal(false);
           } else if (count === 7) {
-            setSelectedPath(null);
             setShowPathModal(false);
             showPathModalTempRef.current = false;
             setAutoScrollModal(false);
+            setSelectedPath(null);
             setShowLandingPage(false);
             showLandingPageTempRef.current = false;
             setAutoScrollLandingPage(false);
-            stopLiveAudio(); // 'अब आई कोई रिस्पांस नहीं देगा'
             setShowFullScreenFreeTrial(true);
             
             setTimeout(() => {
               setShowFullScreenFreeTrial(false);
-              setSelectedPath(null);
-              setShowPathModal(true);
             }, 20000);
           }
 
-          if (count <= 6) {
+          if (count === 1) {
             if (postResponseLandingTimerRef.current) {
               clearTimeout(postResponseLandingTimerRef.current);
             }
@@ -5299,12 +5271,12 @@ export default function App({ clientId }: AppProps = {}) {
               setShowPromoImage(false);
               showPromoImageRef.current = false;
               setShowPathModal(false);
-              setAutoScrollModal(false);
               showPathModalTempRef.current = false;
+              setAutoScrollModal(false);
+              setSelectedPath(null);
               setShowLandingPage(false);
               showLandingPageTempRef.current = false;
               setAutoScrollLandingPage(false);
-              setSelectedPath(null);
             }, 20000);
           }
         }
@@ -12252,8 +12224,22 @@ export default function App({ clientId }: AppProps = {}) {
 
               <h2 className="text-4xl md:text-5xl font-black text-white font-mukta mb-4">
                 {uiLang === "hi"
-                  ? "अब आपका बिज़नेस पूरी तरह से एआई संचालित होने को तैयार है।"
-                  : "Your business is ready to be fully AI powered."}
+                  ? `अब आपका ${
+                      selectedRole?.id === "agriculture" ? "एग्री बिज़नेस" :
+                      selectedRole?.id === "medical" ? "क्लिनिक/अस्पताल" :
+                      selectedRole?.id === "education" ? "संस्थान" :
+                      selectedRole?.id === "retail" ? "स्टोर" :
+                      selectedRole?.id === "finance" ? "फाइनेंस बिज़नेस" :
+                      "बिज़नेस"
+                    } पूरी तरह से एआई संचालित होने को तैयार है।`
+                  : `Your ${
+                      selectedRole?.id === "agriculture" ? "agri-business" :
+                      selectedRole?.id === "medical" ? "clinic/hospital" :
+                      selectedRole?.id === "education" ? "institution" :
+                      selectedRole?.id === "retail" ? "store" :
+                      selectedRole?.id === "finance" ? "finance business" :
+                      "business"
+                    } is ready to be fully AI powered.`}
               </h2>
 
               <p className="text-xl sm:text-2xl text-amber-200 mb-8 font-medium">
