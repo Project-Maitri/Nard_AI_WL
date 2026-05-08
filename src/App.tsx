@@ -4313,7 +4313,24 @@ export default function App({ clientId }: AppProps = {}) {
  
 
   useEffect(() => {
-    const onUserActivity = () => setIsClientSpeaking(true);
+    const onUserActivity = () => {
+      setIsClientSpeaking(true);
+      if (showPromoImageRef.current) {
+        setShowPromoImage(false);
+        showPromoImageRef.current = false;
+        if (postResponseLandingTimerRef.current) {
+          clearTimeout(postResponseLandingTimerRef.current);
+        }
+      }
+      if (showPathModalTempRef.current) {
+        setShowPathModal(false);
+        showPathModalTempRef.current = false;
+        setSelectedPath(null);
+        if (postResponseLandingTimerRef.current) {
+          clearTimeout(postResponseLandingTimerRef.current);
+        }
+      }
+    };
     const onUserIdle = () => setIsClientSpeaking(false);
     
     window.addEventListener('live-user-activity', onUserActivity);
@@ -5064,6 +5081,7 @@ export default function App({ clientId }: AppProps = {}) {
   const [isSessionActive, setIsSessionActive] = useState(false);
 
   const isInitialResumeTurnRef = useRef(false);
+  const isModelGeneratingRef = useRef(false);
   const isSessionActiveRef = useRef(false);
   const liveRecapBufferRef = useRef("");
   useEffect(() => {
@@ -5089,13 +5107,17 @@ export default function App({ clientId }: AppProps = {}) {
   const [showPromoImage, setShowPromoImage] = useState(false);
   const showPromoImageRef = useRef(false);
   const [hasShownPromoImage, setHasShownPromoImage] = useState(false);
+  const prevIsModelSpeakingRef = useRef(false);
+  const postResponseLandingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const liveModelTurnCountRef = useRef(0);
+  const showPathModalTempRef = useRef(false);
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioInput, setSelectedAudioInput] =
     useState<string>("default");
 
   // Trigger promo image after the first live greeting finishes
   useEffect(() => {
-    if (isLive && liveGreetingFinished && !hasShownPromoImage) {
+    if (isLive && liveGreetingFinished && !hasShownPromoImage && !isClientSpeaking) {
       setHasShownPromoImage(true);
       setShowPromoImage(true);
       showPromoImageRef.current = true;
@@ -5104,22 +5126,83 @@ export default function App({ clientId }: AppProps = {}) {
         showPromoImageRef.current = false;
       }, 10000);
     }
-  }, [isLive, liveGreetingFinished, hasShownPromoImage]);
+  }, [isLive, liveGreetingFinished, hasShownPromoImage, isClientSpeaking]);
 
-  // Reset flag when live disconnects or starts connecting
+  // Show promo image or path modal for 10 seconds after subsequent responses
   useEffect(() => {
-    if (isLiveConnecting) {
+    if (isLive) {
+      if (prevIsModelSpeakingRef.current && !isModelSpeaking) {
+        // Model just finished speaking
+        if (liveGreetingFinished && hasShownPromoImage && !showPromoImageRef.current && !showPathModalTempRef.current && !isClientSpeaking && !showLandingPage) {
+          liveModelTurnCountRef.current += 1;
+          
+          if (liveModelTurnCountRef.current >= 3) {
+            setSelectedPath("platform");
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
+          } else if (liveModelTurnCountRef.current === 2) {
+            setSelectedPath(null);
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
+          } else {
+            setShowPromoImage(true);
+            showPromoImageRef.current = true;
+          }
+          
+          if (postResponseLandingTimerRef.current) {
+            clearTimeout(postResponseLandingTimerRef.current);
+          }
+          
+          postResponseLandingTimerRef.current = setTimeout(() => {
+            setShowPromoImage(false);
+            showPromoImageRef.current = false;
+            setShowPathModal(false);
+            showPathModalTempRef.current = false;
+            setSelectedPath(null);
+          }, 10000);
+        }
+      } else if (!prevIsModelSpeakingRef.current && isModelSpeaking) {
+        // Model started speaking again
+        if (showPromoImageRef.current) {
+           setShowPromoImage(false);
+           showPromoImageRef.current = false;
+           if (postResponseLandingTimerRef.current) {
+             clearTimeout(postResponseLandingTimerRef.current);
+           }
+        }
+        if (showPathModalTempRef.current) {
+           setShowPathModal(false);
+           showPathModalTempRef.current = false;
+           setSelectedPath(null);
+           if (postResponseLandingTimerRef.current) {
+             clearTimeout(postResponseLandingTimerRef.current);
+           }
+        }
+      }
+      prevIsModelSpeakingRef.current = isModelSpeaking;
+    }
+  }, [isLive, isModelSpeaking, liveGreetingFinished, hasShownPromoImage, isClientSpeaking, showLandingPage]);
+
+  // Reset flags when live disconnects or starts connecting
+  useEffect(() => {
+    if (isLiveConnecting || !isLive) {
       setHasShownPromoImage(false);
       setShowPromoImage(false);
       showPromoImageRef.current = false;
+      liveModelTurnCountRef.current = 0;
+      showPathModalTempRef.current = false;
+      
+      if (postResponseLandingTimerRef.current) {
+        clearTimeout(postResponseLandingTimerRef.current);
+      }
     }
-  }, [isLiveConnecting]);
+  }, [isLiveConnecting, isLive]);
 
   useEffect(() => {
     // Show video whenever the session is active and no one is currently speaking
-    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showGreetingMessage && !showLiveWelcomeAnimation;
+    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showGreetingMessage && !showLiveWelcomeAnimation && !showPathModal;
     setIsVideoPlaying(shouldPlay);
-  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showGreetingMessage, showLiveWelcomeAnimation]);
+  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showGreetingMessage, showLiveWelcomeAnimation, showPathModal]);
 
   // TTS Refs
   const ttsAudioContextRef = useRef<AudioContext | null>(null);
@@ -6767,6 +6850,9 @@ export default function App({ clientId }: AppProps = {}) {
               isInitialResumeTurnRef.current = false;
               liveRecapBufferRef.current = "";
             }
+            if (message.serverContent?.modelTurn) {
+              isModelGeneratingRef.current = true;
+            }
             const parts = message.serverContent?.modelTurn?.parts;
             let incomingText = "";
             if (parts) {
@@ -6777,6 +6863,19 @@ export default function App({ clientId }: AppProps = {}) {
                 if (part.text) {
                   incomingText += part.text;
                 }
+              }
+            }
+            if (message.serverContent?.turnComplete) {
+              isModelGeneratingRef.current = false;
+              // Add a small cleanup step here if we already finished speaking but were waiting for turnComplete
+              const timeUntilEnd = (nextAudioTimeRef.current - audioContextRef.current.currentTime) * 1000;
+              if (timeUntilEnd <= 0) {
+                 if ((window as any).speakingTimeout) {
+                   clearTimeout((window as any).speakingTimeout);
+                 }
+                 isModelSpeakingRef.current = false;
+                 setIsModelSpeaking(false);
+                 setLiveGreetingFinished(true);
               }
             }
 
@@ -7089,11 +7188,13 @@ export default function App({ clientId }: AppProps = {}) {
         (nextAudioTimeRef.current - audioContextRef.current.currentTime) * 1000;
       (window as any).speakingTimeout = setTimeout(
         () => {
-          isModelSpeakingRef.current = false;
-          setIsModelSpeaking(false);
-          setLiveGreetingFinished(true);
+          if (!isModelGeneratingRef.current) {
+            isModelSpeakingRef.current = false;
+            setIsModelSpeaking(false);
+            setLiveGreetingFinished(true);
+          }
         },
-        Math.max(0, timeUntilEnd) + 500,
+        Math.max(0, timeUntilEnd) + 2000,
       );
     } catch (e) {
       console.warn("Error playing live audio:", e);
@@ -10042,7 +10143,7 @@ export default function App({ clientId }: AppProps = {}) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={handleInterruption}
-              className="fixed inset-0 flex flex-col items-center justify-center z-[999999] overflow-hidden cursor-pointer"
+              className={`fixed inset-0 flex flex-col items-center justify-center z-[999999] overflow-hidden cursor-pointer transition-opacity duration-500 ${showLandingPage ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             >
               {/* Nard Welcome Animation */}
               <AnimatePresence>
