@@ -3937,7 +3937,7 @@ export default function App({ clientId }: AppProps = {}) {
           content.addEventListener("touchstart", userInteractionHandler, { passive: true });
           content.addEventListener("wheel", userInteractionHandler, { passive: true });
           
-          const duration = 20000; // 20 seconds total
+          const duration = 15000; // 15 seconds total
           const startScroll = content.scrollTop;
           const targetScroll = content.scrollHeight - content.clientHeight;
           const startTime = performance.now();
@@ -3984,7 +3984,7 @@ export default function App({ clientId }: AppProps = {}) {
           content.addEventListener("touchstart", userInteractionHandler, { passive: true });
           content.addEventListener("wheel", userInteractionHandler, { passive: true });
 
-          const duration = 20000; // 20 sec
+          const duration = 15000; // 15 sec
           const startScroll = content.scrollTop;
           const targetScroll = content.scrollHeight - content.clientHeight;
           const startTime = performance.now();
@@ -4431,6 +4431,13 @@ export default function App({ clientId }: AppProps = {}) {
         setShowLandingPage(false);
         showLandingPageTempRef.current = false;
         setAutoScrollLandingPage(false);
+        if (postResponseLandingTimerRef.current) {
+          clearTimeout(postResponseLandingTimerRef.current);
+        }
+      }
+      if (showFullScreenFreeTrialTempRef.current) {
+        setShowFullScreenFreeTrial(false);
+        showFullScreenFreeTrialTempRef.current = false;
         if (postResponseLandingTimerRef.current) {
           clearTimeout(postResponseLandingTimerRef.current);
         }
@@ -5217,6 +5224,7 @@ export default function App({ clientId }: AppProps = {}) {
   const liveModelTurnCountRef = useRef(0);
   const showPathModalTempRef = useRef(false);
   const showLandingPageTempRef = useRef(false);
+  const showFullScreenFreeTrialTempRef = useRef(false);
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioInput, setSelectedAudioInput] =
     useState<string>("default");
@@ -5224,13 +5232,17 @@ export default function App({ clientId }: AppProps = {}) {
   // Trigger promo image after the first live greeting finishes
   useEffect(() => {
     if (isLive && liveGreetingFinished && !hasShownPromoImage && !isClientSpeaking) {
+      // Unmute mic after greeting ends
+      setIsMicMuted(false);
+      isMicMutedRef.current = false;
+      
       setHasShownPromoImage(true);
       setShowPromoImage(true);
       showPromoImageRef.current = true;
       setTimeout(() => {
         setShowPromoImage(false);
         showPromoImageRef.current = false;
-      }, 20000);
+      }, 15000);
     }
   }, [isLive, liveGreetingFinished, hasShownPromoImage, isClientSpeaking]);
 
@@ -5239,7 +5251,7 @@ export default function App({ clientId }: AppProps = {}) {
     if (isLive) {
       if (prevIsModelSpeakingRef.current && !isModelSpeaking) {
         // Model just finished speaking
-        if (liveGreetingFinished && hasShownPromoImage && !showPromoImageRef.current && !showPathModalTempRef.current && !showLandingPageTempRef.current && !isClientSpeaking && !showLandingPage) {
+        if (liveGreetingFinished && hasShownPromoImage && !showPromoImageRef.current && !showPathModalTempRef.current && !showLandingPageTempRef.current && !showFullScreenFreeTrialTempRef.current && !isClientSpeaking && !showLandingPage) {
           liveModelTurnCountRef.current += 1;
           const count = liveModelTurnCountRef.current;
           
@@ -5247,6 +5259,11 @@ export default function App({ clientId }: AppProps = {}) {
             setShowLandingPage(true);
             showLandingPageTempRef.current = true;
             setAutoScrollLandingPage(false);
+          } else if (count >= 2 && count <= 6) {
+            setSelectedPath("platform");
+            setShowPathModal(true);
+            showPathModalTempRef.current = true;
+            setAutoScrollModal(true);
           } else if (count === 7) {
             setShowPathModal(false);
             showPathModalTempRef.current = false;
@@ -5256,13 +5273,10 @@ export default function App({ clientId }: AppProps = {}) {
             showLandingPageTempRef.current = false;
             setAutoScrollLandingPage(false);
             setShowFullScreenFreeTrial(true);
-            
-            setTimeout(() => {
-              setShowFullScreenFreeTrial(false);
-            }, 20000);
+            showFullScreenFreeTrialTempRef.current = true;
           }
 
-          if (count === 1) {
+          if (count >= 1 && count <= 7) {
             if (postResponseLandingTimerRef.current) {
               clearTimeout(postResponseLandingTimerRef.current);
             }
@@ -5277,7 +5291,9 @@ export default function App({ clientId }: AppProps = {}) {
               setShowLandingPage(false);
               showLandingPageTempRef.current = false;
               setAutoScrollLandingPage(false);
-            }, 20000);
+              setShowFullScreenFreeTrial(false);
+              showFullScreenFreeTrialTempRef.current = false;
+            }, 15000);
           }
         }
       } else if (!prevIsModelSpeakingRef.current && isModelSpeaking) {
@@ -5308,6 +5324,13 @@ export default function App({ clientId }: AppProps = {}) {
              clearTimeout(postResponseLandingTimerRef.current);
            }
         }
+        if (showFullScreenFreeTrialTempRef.current) {
+           setShowFullScreenFreeTrial(false);
+           showFullScreenFreeTrialTempRef.current = false;
+           if (postResponseLandingTimerRef.current) {
+             clearTimeout(postResponseLandingTimerRef.current);
+           }
+        }
       }
       prevIsModelSpeakingRef.current = isModelSpeaking;
     }
@@ -5324,6 +5347,7 @@ export default function App({ clientId }: AppProps = {}) {
       setAutoScrollLandingPage(false);
       showPathModalTempRef.current = false;
       showLandingPageTempRef.current = false;
+      showFullScreenFreeTrialTempRef.current = false;
       
       if (postResponseLandingTimerRef.current) {
         clearTimeout(postResponseLandingTimerRef.current);
@@ -5333,9 +5357,9 @@ export default function App({ clientId }: AppProps = {}) {
 
   useEffect(() => {
     // Show video whenever the session is active and no one is currently speaking
-    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showLandingPage && !showGreetingMessage && !showLiveWelcomeAnimation && !showPathModal;
+    const shouldPlay = isLive && !isModelSpeaking && !isClientSpeaking && !showPromoImage && !showLandingPage && !showGreetingMessage && !showPathModal && !showLiveWelcomeAnimation;
     setIsVideoPlaying(shouldPlay);
-  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showLandingPage, showGreetingMessage, showLiveWelcomeAnimation, showPathModal]);
+  }, [isLive, isModelSpeaking, isClientSpeaking, showPromoImage, showLandingPage, showGreetingMessage, showPathModal, showLiveWelcomeAnimation]);
 
   // TTS Refs
   const ttsAudioContextRef = useRef<AudioContext | null>(null);
@@ -6496,6 +6520,10 @@ export default function App({ clientId }: AppProps = {}) {
     setIsVideoPlaying(false);
     setLiveSessionStartIndex(messages.length);
     stopMessageAudio();
+    
+    // Automatically mute mic so the user cannot interrupt the welcome speech
+    setIsMicMuted(true);
+    isMicMutedRef.current = true;
 
     if (isVoiceTyping && recognitionRef.current) {
       voiceTypingTranscriptRef.current = "";
@@ -6668,6 +6696,7 @@ export default function App({ clientId }: AppProps = {}) {
                 !showPromoImageRef.current &&
                 !showPathModalTempRef.current &&
                 !showLandingPageTempRef.current &&
+                !showFullScreenFreeTrialTempRef.current &&
                 isSessionActiveRef.current
               ) {
                 sessionPromiseRef.current
@@ -6761,6 +6790,7 @@ export default function App({ clientId }: AppProps = {}) {
               !showPromoImageRef.current &&
               !showPathModalTempRef.current &&
               !showLandingPageTempRef.current &&
+              !showFullScreenFreeTrialTempRef.current &&
               isSessionActiveRef.current
             ) {
               sessionPromiseRef.current
@@ -7590,7 +7620,7 @@ export default function App({ clientId }: AppProps = {}) {
 
           if (isSpeaking) {
             lastInteractionTime = Date.now();
-          } else if (react > 0.35) {
+          } else if (react > 0.35 && !isMicMutedRef.current) {
             lastInteractionTime = Date.now();
             if (!(window as any)._liveUserSpeakingActive) {
                 (window as any)._liveUserSpeakingActive = true;
@@ -10362,7 +10392,7 @@ export default function App({ clientId }: AppProps = {}) {
                        <img 
                           src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop" 
                           alt="Nard Features" 
-                          className="absolute inset-0 w-full h-full object-cover opacity-50 scale-105 transform animate-pulse"
+                          className="absolute inset-0 w-full h-full object-contain opacity-50 transform animate-pulse"
                           style={{ animationDuration: '4s' }}
                        />
                        
@@ -10414,20 +10444,6 @@ export default function App({ clientId }: AppProps = {}) {
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* Connecting State UI */}
-              {isLiveConnecting && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center z-[100] bg-black/40 backdrop-blur-sm pointer-events-none"
-                >
-                  <Loader2 className="w-12 h-12 text-emerald-400 animate-spin mb-4" />
-                  <p className="text-emerald-400 font-mono text-sm tracking-widest animate-pulse">
-                    ESTABLISHING SECURE CONNECTION...
-                  </p>
-                </motion.div>
-              )}
 
               {/* Frequency Visualizer (Full Screen Background) */}
               <div className="absolute inset-0 w-full h-full z-0 pointer-events-none flex items-center justify-center">
