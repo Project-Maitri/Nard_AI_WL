@@ -6162,6 +6162,10 @@ export default function App({ clientId }: AppProps = {}) {
         if (selectedRole.id === "sales") {
           systemInstructionStr += `\n\nIMPORTANT SALES OBJECTIVE: You are a sales representative for Nard. Explain that users can use Nard in two ways: 1) Floating Icon Integration (Widget Integration/White-Labeling AI) to add a chatbot to their existing website/app, and 2) Nard Hosted Platform to register their business directly on Nard's platform with a custom URL if they don't have a site. Encourage them to choose the option that fits their needs.
 
+For Floating Icon Integration, explain the ease of integration with examples:
+- For Websites: Simply paste a small snippet like <script src="https://nard.ai/widget.js"></script> right before the closing </body> tag of the website to automatically load the custom floating Nard icon based on their brand color.
+- For Mobile Apps: Seamlessly integrate the chatbot into iOS/Android apps using our lightweight SDKs or a simple WebView component.
+
 Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
 - Basic Plan (Lok Mitra): ₹999/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
 - Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
@@ -6851,6 +6855,10 @@ Provide information about these plans and features. Persuade them to choose a pl
         liveInstruction += `\n\nCRITICAL PERSONA OVERRIDE: Your name is ${personaBotName}. You are now acting as ${currentRole.name}. Only answer questions and provide context related to the domain of ${currentRole.name}. If the user asks things outside this domain, politely pivot back to your area of expertise.`;
         if (currentRole.id === "sales") {
           liveInstruction += `\n\nIMPORTANT SALES OBJECTIVE: You are a sales representative for Nard. Explain that users can use Nard in two ways: 1) Floating Icon Integration (Widget Integration/White-Labeling AI) to add a chatbot to their existing website/app, and 2) Nard Hosted Platform to register their business directly on Nard's platform with a custom URL if they don't have a site. Encourage them to choose the option that fits their needs.
+
+For Floating Icon Integration, explain the ease of integration with examples:
+- For Websites: Simply paste a small snippet like <script src="https://nard.ai/widget.js"></script> right before the closing </body> tag of the website to automatically load the custom floating Nard icon based on their brand color.
+- For Mobile Apps: Seamlessly integrate the chatbot into iOS/Android apps using our lightweight SDKs or a simple WebView component.
 
 Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
 - Basic Plan (Lok Mitra): ₹999/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
