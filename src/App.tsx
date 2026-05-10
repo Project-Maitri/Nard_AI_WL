@@ -6583,6 +6583,26 @@ Provide information about these plans and features. Persuade them to choose a pl
       return;
     }
 
+    // Initialize and resume AudioContext immediately within the user gesture
+    let audioCtx: AudioContext;
+    if (!audioContextRef.current) {
+      try {
+        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+      } catch (e) {
+        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      audioContextRef.current = audioCtx;
+    } else {
+      audioCtx = audioContextRef.current;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    }
+
     setIsLiveConnecting(true);
     setShowLiveWelcomeAnimation(true);
     setShowGreetingMessage(false);
@@ -6637,19 +6657,7 @@ Provide information about these plans and features. Persuade them to choose a pl
       });
       mediaStreamRef.current = stream;
 
-      let audioCtx;
-      try {
-        audioCtx = new (
-          window.AudioContext || (window as any).webkitAudioContext
-        )({ sampleRate: 16000 });
-      } catch (e) {
-        audioCtx = new (
-          window.AudioContext || (window as any).webkitAudioContext
-        )();
-      }
-
-      await audioCtx.resume();
-      audioContextRef.current = audioCtx;
+      const audioCtx = audioContextRef.current!;
       const source = audioCtx.createMediaStreamSource(stream);
 
       if (!backgroundAudioRef.current) {
