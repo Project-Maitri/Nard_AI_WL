@@ -288,12 +288,12 @@ const playBeep = (type: "connect" | "disconnect", existingCtx?: any) => {
     
     if (type === "connect") {
       // Soft UI upward beep
-      playNote(523.25, now, 0.1, 0.02, 0.05, 0.3); // C5
-      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.3); // E5
+      playNote(523.25, now, 0.1, 0.02, 0.05, 0.6); // C5
+      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.6); // E5
     } else {
       // Soft UI downward beep
-      playNote(659.25, now, 0.1, 0.02, 0.05, 0.3); // E5
-      playNote(523.25, now + 0.1, 0.15, 0.02, 0.1, 0.3); // C5
+      playNote(659.25, now, 0.1, 0.02, 0.05, 0.6); // E5
+      playNote(523.25, now + 0.1, 0.15, 0.02, 0.1, 0.6); // C5
     }
     
     if (shouldClose) {
