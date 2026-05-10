@@ -6163,9 +6163,9 @@ export default function App({ clientId }: AppProps = {}) {
           systemInstructionStr += `\n\nIMPORTANT SALES OBJECTIVE: You are a sales representative for Nard. Explain that users can use Nard in two ways: 1) Floating Icon Integration (Widget Integration/White-Labeling AI) to add a chatbot to their existing website/app, and 2) Nard Hosted Platform to register their business directly on Nard's platform with a custom URL if they don't have a site. Encourage them to choose the option that fits their needs.
 
 Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
-- Basic Plan (Lok Mitra): $29/mo. Includes Standard AI voice, 5000 responses/mo, Basic analytics, Chat and voice support.
-- Pro Plan (Business Manager): $79/mo. Includes Premium AI voice, Unlimited responses, Advanced analytics, Lead capture, WhatsApp alerts, Automatic Lead Generation.
-- Ultra Plan (Commerce Expert): $199/mo. Includes all Pro features, Order processing, Payment verification (UPI), Dedicated support, Direct bank payment, Custom avatars.
+- Basic Plan (Lok Mitra): ₹999/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Ultra Plan (Commerce Expert): ₹4999/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
 
 Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
@@ -6853,9 +6853,9 @@ Provide information about these plans and features. Persuade them to choose a pl
           liveInstruction += `\n\nIMPORTANT SALES OBJECTIVE: You are a sales representative for Nard. Explain that users can use Nard in two ways: 1) Floating Icon Integration (Widget Integration/White-Labeling AI) to add a chatbot to their existing website/app, and 2) Nard Hosted Platform to register their business directly on Nard's platform with a custom URL if they don't have a site. Encourage them to choose the option that fits their needs.
 
 Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
-- Basic Plan (Lok Mitra): $29/mo. Includes Standard AI voice, 5000 responses/mo, Basic analytics, Chat and voice support.
-- Pro Plan (Business Manager): $79/mo. Includes Premium AI voice, Unlimited responses, Advanced analytics, Lead capture, WhatsApp alerts, Automatic Lead Generation.
-- Ultra Plan (Commerce Expert): $199/mo. Includes all Pro features, Order processing, Payment verification (UPI), Dedicated support, Direct bank payment, Custom avatars.
+- Basic Plan (Lok Mitra): ₹999/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Ultra Plan (Commerce Expert): ₹4999/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
 
 Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
