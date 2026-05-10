@@ -519,10 +519,10 @@ import { SYSTEM_INSTRUCTION } from "./systemInstruction";
 const industryQuestions: Record<string, Record<string, string[]>> = {
   en: {
     sales: [
-      "What is Nard White-Labeling AI?",
+      "What is Floating Icon Integration?",
+      "Tell me about Nard Hosted Platform.",
+      "What are the plans and pricing?",
       "How can I integrate Nard into my business?",
-      "Does Nard support regional languages?",
-      "What industries can use this solution?",
     ],
     agriculture: [
       "What are modern farming techniques?",
@@ -563,10 +563,10 @@ const industryQuestions: Record<string, Record<string, string[]>> = {
   },
   hi: {
     sales: [
-      "नॉर्ड व्हाइट-लेबलिंग AI क्या है?",
-      "मैं नॉर्ड को अपने बिजनेस में कैसे जोड़ सकता हूँ?",
-      "क्या नॉर्ड क्षेत्रीय भाषाओं का समर्थन करता है?",
-      "इस सर्विस का उपयोग किस तरह के बिजनेस कर सकते हैं?",
+      "फ्लोटिंग आइकॉन इंटीग्रेशन क्या है?",
+      "नार्ड होस्टेड प्लेटफार्म के बारे में बताएं।",
+      "इनके प्लान और फीचर्स क्या हैं?",
+      "मैं नार्ड को अपने बिजनेस में कैसे जोड़ सकता हूँ?",
     ],
     agriculture: [
       "आधुनिक खेती की तकनीकें क्या हैं?",
@@ -662,10 +662,10 @@ const translations: Record<string, any> = {
     adjustRate: "Adjust voice speed",
     speechPitch: "Speech Pitch",
     adjustPitch: "Adjust voice pitch",
-    q1: "What is Nard White-Labeling AI?",
-    q2: "How can I integrate Nard?",
-    q3: "Does it support regional languages?",
-    q4: "What industries can use this?",
+    q1: "What is Floating Icon Integration?",
+    q2: "Tell me about Nard Hosted Platform.",
+    q3: "What are the plans and pricing?",
+    q4: "How can I integrate Nard into my business?",
     initialMessage:
       "Hello Gen-Z! Welcome to the E-Maitri portal! Tell me friend, how can I help you? What information do you need?",
     initialMessageWithName:
@@ -3642,21 +3642,21 @@ export default function App({ clientId }: AppProps = {}) {
       const displayName = role.id === "sales" ? role.name : (name || role.name || "Nard");
       const trans: Record<string, Record<string, string>> = {
         en: {
-          sales: `Hello! I am ${displayName} Platform Representative. I can explain the utility and benefits of white-labeling, and how you can integrate Nard's services for your business.`,
+          sales: `Hello! I am ${displayName} Platform Representative. I can explain the two ways you can integrate Nard: Floating Icon Integration for your site, or the Nard Hosted Platform. I can also help you with their plans and benefits.`,
           agriculture: `Hello! I am ${displayName} (Agri Expert). You can ask me anything related to farming, crops, or agriculture.`,
           medical: `Hello! I am ${displayName} (Health Companion). I will assist you with any questions regarding health, fitness, or illness.`,
           education: `Hello! I am ${displayName} (Education Assistant). I will help you understand your studies, career, or any subject.`,
           business: `Hello! I am ${displayName} (Business Manager). You can get any advice related to business, marketing, or finance from me.`,
         },
         hi: {
-          sales: `नमस्ते! मैं ${displayName} प्लेटफ़ॉर्म रिप्रेजेंटेटिव हूँ। मैं आपको व्हाइट-लेबलिंग की उपयोगिता और लाभों के बारे में बता सकता हूँ, और यह भी कि आप अपने व्यवसाय के लिए नॉर्ड की सेवाएँ कैसे प्राप्त कर सकते हैं।`,
+          sales: `नमस्ते! मैं ${displayName} प्लेटफ़ॉर्म रिप्रेजेंटेटिव हूँ। मैं आपको नार्ड को जोड़ने के दो तरीकों: आपकी साइट के लिए फ्लोटिंग आइकॉन इंटीग्रेशन, या नार्ड होस्टेड प्लेटफॉर्म के बारे में बता सकता हूँ। मैं आपको इनके प्लान्स और फायदों की भी जानकारी दे सकता हूँ।`,
           agriculture: `नमस्ते! मैं ${displayName} (किसान मित्र) हूँ। कृषि, फसल या खेती से जुड़ी किसी भी जानकारी के लिए आप मुझसे बात कर सकते हैं।`,
           medical: `नमस्ते! मैं ${displayName} (स्वास्थ्य साथी) हूँ। स्वास्थ्य, फिटनेस या बीमारियों से जुड़े किसी भी सवाल के लिए मैं आपकी सहायता करूँगा।`,
           education: `नमस्ते! मैं ${displayName} (शिक्षा सहायक) हूँ। पढ़ाई, करियर या किसी भी विषय को समझने में मैं आपकी मदद करूँगा।`,
           business: `नमस्ते! मैं ${displayName} (व्यापार प्रबंधक) हूँ। व्यवसाय, मार्केटिंग या फाइनेंस से जुड़ी कोई भी सलाह आप मुझसे ले सकते हैं।`,
         },
         bho: {
-          sales: `नमस्ते! हम ${displayName} प्लेटफॉर्म रिप्रेजेंटेटिव हईं। हम रउआ के व्हाइट-लेबलिंग के फायदा बता सकत बानी, आ इहो कि रउआ अपना बिजनेस खातिर नॉर्ड के सर्विस कइसे ले सकेनी।`,
+          sales: `नमस्ते! हम ${displayName} प्लेटफॉर्म रिप्रेजेंटेटिव हईं। हम रउआ के नार्ड जोड़े के दू गो तरीका: फ्लोटिंग आइकॉन इंटीग्रेशन आ नार्ड होस्टेड प्लेटफॉर्म के बारे में बता सकत बानी, आ एकर प्लान आ फायदा के भी जानकारी दे सकेनी।`,
           agriculture: `नमस्ते! हम ${displayName} (किसान मित्र) हईं। खेती-बारी या फसल से जुड़ल कवनो जानकारी खातिर रउआ हमरा से बात कर सकेनी।`,
           medical: `नमस्ते! हम ${displayName} (स्वास्थ्य साथी) हईं। स्वास्थ्य, फिटनेस या बीमारी से जुड़ल कवनो सवाल खातिर हम रउआ मदद करब।`,
           education: `नमस्ते! हम ${displayName} (शिक्षा सहायक) हईं। पढ़ाई, करियर या कवनो विषय के समझे में हम रउआ मदद करब।`,
@@ -6160,7 +6160,14 @@ export default function App({ clientId }: AppProps = {}) {
         const personaBotName = selectedRole.id === "sales" ? selectedRole.name : (demoBotName.trim() ? demoBotName.trim() : selectedRole.name);
         systemInstructionStr += `\n\nCRITICAL PERSONA OVERRIDE: Your name is ${personaBotName}. You are acting as an expert in the domain of ${selectedRole.name}. Only answer questions and provide context related to this domain. If the user asks things outside this domain, politely pivot back to your area of expertise.`;
         if (selectedRole.id === "sales") {
-          systemInstructionStr += `\n\nIMPORTANT SALES OBJECTIVE: You are selling Nard's White-Labeling AI service. Explain to the user how they can use Nard as a core conversational AI on their own platforms (agritech, medtech, edtech, e-commerce, banking, etc) with their own branding. Persuade them of the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
+          systemInstructionStr += `\n\nIMPORTANT SALES OBJECTIVE: You are a sales representative for Nard. Explain that users can use Nard in two ways: 1) Floating Icon Integration (Widget Integration/White-Labeling AI) to add a chatbot to their existing website/app, and 2) Nard Hosted Platform to register their business directly on Nard's platform with a custom URL if they don't have a site. Encourage them to choose the option that fits their needs.
+
+Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
+- Basic Plan (Lok Mitra): $29/mo. Includes Standard AI voice, 5000 responses/mo, Basic analytics, Chat and voice support.
+- Pro Plan (Business Manager): $79/mo. Includes Premium AI voice, Unlimited responses, Advanced analytics, Lead capture, WhatsApp alerts, Automatic Lead Generation.
+- Ultra Plan (Commerce Expert): $199/mo. Includes all Pro features, Order processing, Payment verification (UPI), Dedicated support, Direct bank payment, Custom avatars.
+
+Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
       }
 
@@ -6843,7 +6850,14 @@ export default function App({ clientId }: AppProps = {}) {
         const personaBotName = currentRole.id === "sales" ? currentRole.name : (demoBotName.trim() ? demoBotName.trim() : currentRole.name);
         liveInstruction += `\n\nCRITICAL PERSONA OVERRIDE: Your name is ${personaBotName}. You are now acting as ${currentRole.name}. Only answer questions and provide context related to the domain of ${currentRole.name}. If the user asks things outside this domain, politely pivot back to your area of expertise.`;
         if (currentRole.id === "sales") {
-          liveInstruction += `\n\nIMPORTANT SALES OBJECTIVE: You are selling Nard's White-Labeling AI service. Explain to the user how they can use Nard as a core conversational AI on their own platforms (agritech, medtech, edtech, e-commerce, banking, etc) with their own branding. Persuade them of the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
+          liveInstruction += `\n\nIMPORTANT SALES OBJECTIVE: You are a sales representative for Nard. Explain that users can use Nard in two ways: 1) Floating Icon Integration (Widget Integration/White-Labeling AI) to add a chatbot to their existing website/app, and 2) Nard Hosted Platform to register their business directly on Nard's platform with a custom URL if they don't have a site. Encourage them to choose the option that fits their needs.
+
+Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
+- Basic Plan (Lok Mitra): $29/mo. Includes Standard AI voice, 5000 responses/mo, Basic analytics, Chat and voice support.
+- Pro Plan (Business Manager): $79/mo. Includes Premium AI voice, Unlimited responses, Advanced analytics, Lead capture, WhatsApp alerts, Automatic Lead Generation.
+- Ultra Plan (Commerce Expert): $199/mo. Includes all Pro features, Order processing, Payment verification (UPI), Dedicated support, Direct bank payment, Custom avatars.
+
+Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
       }
 
@@ -6936,8 +6950,8 @@ export default function App({ clientId }: AppProps = {}) {
               prebuiltVoiceConfig: { voiceName: premiumVoiceRef.current },
             },
           },
-          outputAudioTranscription: {},
-          inputAudioTranscription: {},
+          outputAudioTranscription: { model: "models/gemini-3.1-flash-live-preview" } as any,
+          inputAudioTranscription: { model: "models/gemini-3.1-flash-live-preview" } as any,
         },
         callbacks: {
           onopen: () => {
