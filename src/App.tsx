@@ -284,14 +284,14 @@ const playBeep = (type: "connect" | "disconnect", existingCtx?: any) => {
     };
 
     // Add slight padding to avoid scheduling in the past
-    const now = audioCtx.currentTime + 0.02;
+    const now = audioCtx.currentTime + 0.05;
     
     if (type === "connect") {
       // Soft UI upward beep
-      playNote(523.25, now, 0.1, 0.02, 0.05, 0.1); // C5
-      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.1); // E5
+      playNote(523.25, now, 0.1, 0.02, 0.05, 0.3); // C5
+      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.3); // E5
     } else {
-      // Soft UI downward beep (louder)
+      // Soft UI downward beep
       playNote(659.25, now, 0.1, 0.02, 0.05, 0.3); // E5
       playNote(523.25, now + 0.1, 0.15, 0.02, 0.1, 0.3); // C5
     }
@@ -7031,7 +7031,10 @@ Provide information about these plans and features. Persuade them to choose a pl
         callbacks: {
           onopen: () => {
             console.log("Live API connected successfully. Session active.");
-            playBeep("connect", audioContextRef.current);
+            // Give the OS 150ms extra to stabilize audio routing before playing beep
+            setTimeout(() => {
+              playBeep("connect", audioContextRef.current);
+            }, 150);
             setIsLiveConnecting(false);
             isSessionActiveRef.current = true;
             setIsSessionActive(true);
