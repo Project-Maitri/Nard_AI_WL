@@ -8681,27 +8681,18 @@ Provide information about these plans and features. Persuade them to choose a pl
                           <h4 className="text-2xl font-black text-white mb-2">
                             {uiLang === "hi" ? "लोक मित्र (Basic)" : "Basic"}
                           </h4>
-                          <div className="text-4xl font-black text-gray-300 mb-6 drop-shadow-sm">
-                            $29
-                            <span className="text-lg text-gray-500 font-bold">
-                              /mo
+                          <div className="text-4xl font-black text-gray-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
+                            ₹999
+                            <span className="text-lg text-gray-500 font-bold pb-1">
+                              {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                             </span>
                           </div>
 
                           <ul className="space-y-3 mb-8 flex-1">
                             {[
-                              uiLang === "hi"
-                                ? "मानक AI वॉयस"
-                                : "Standard Voice Models",
-                              uiLang === "hi"
-                                ? "5,000 रिस्पॉन्स / माह"
-                                : "5,000 requests / mo",
-                              uiLang === "hi"
-                                ? "बेसिक एनालिटिक्स"
-                                : "Basic Analytics Dashboard",
-                              uiLang === "hi"
-                                ? "चैट और वॉयस सपोर्ट"
-                                : "Chat & Voice Support",
+                              uiLang === "hi" ? "रीयल-टाइम वॉयस अलर्ट्स (Basic)" : "Real-time voice alerts (Basic)",
+                              uiLang === "hi" ? "ई-मैत्री एक्सक्लूसिव जिंगल" : "E-Maitri exclusive jingle",
+                              uiLang === "hi" ? "अनलिमिटेड एसएमएस सिंक" : "Unlimited SMS sync",
                             ].map((feature, i) => (
                               <li
                                 key={i}
@@ -8716,9 +8707,15 @@ Provide information about these plans and features. Persuade them to choose a pl
                             ))}
                           </ul>
 
-                          <button className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg transition-colors border border-gray-600 shadow-sm">
-                            {uiLang === "hi" ? "बेसिक चुनें" : "Start Basic"}
-                          </button>
+                          <div className="flex flex-col gap-3">
+                            <button className="w-full py-4 rounded-2xl bg-[#0f9d58] hover:bg-[#0b8043] text-white font-bold text-lg transition-colors shadow-sm">
+                              {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
+                            </button>
+                            <button className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
+                              <Zap size={18} />
+                              {uiLang === "hi" ? "फ्री ट्रायल शुरू करें" : "Start Free Trial"}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Pro Plan */}
@@ -8730,10 +8727,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                           <h4 className="text-2xl font-black text-white mb-2 mt-2">
                             {uiLang === "hi" ? "बिजनेस मैनेजर (Pro)" : "Pro"}
                           </h4>
-                          <div className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)]">
-                            $79
-                            <span className="text-lg text-gray-400 font-bold">
-                              /mo
+                          <div className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)] flex items-end gap-2 flex-wrap">
+                            ₹2499
+                            <span className="text-lg text-gray-400 font-bold pb-1">
+                              {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                             </span>
                           </div>
 
@@ -8748,16 +8745,9 @@ Provide information about these plans and features. Persuade them to choose a pl
 
                           <ul className="space-y-3 mb-8 flex-1">
                             {[
-                              uiLang === "hi"
-                                ? "प्रीमियम AI वॉयस"
-                                : "Premium Voice Models",
-                              uiLang === "hi"
-                                ? "अनलिमिटेड रिस्पॉन्स"
-                                : "Unlimited requests",
-                              uiLang === "hi"
-                                ? "एडवांस्ड एनालिटिक्स"
-                                : "Advanced Analytics & Insights",
-                              uiLang === "hi" ? "लीड कैप्चर" : "Lead Capture",
+                              uiLang === "hi" ? "रीयल-टाइम वॉयस अलर्ट्स (Pro)" : "Real-time voice alerts (Pro)",
+                              uiLang === "hi" ? "ई-मैत्री एक्सक्लूसिव जिंगल" : "E-Maitri exclusive jingle",
+                              uiLang === "hi" ? "अनलिमिटेड एसएमएस सिंक" : "Unlimited SMS sync",
                             ].map((feature, i) => (
                               <li
                                 key={i}
@@ -8772,11 +8762,15 @@ Provide information about these plans and features. Persuade them to choose a pl
                             ))}
                           </ul>
 
-                          <button className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-600 to-amber-500 shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 text-white font-bold text-lg transition-all drop-shadow-md">
-                            {uiLang === "hi"
-                              ? "प्रो सब्सक्राइब करें"
-                              : "Subscribe Pro"}
-                          </button>
+                          <div className="flex flex-col gap-3">
+                            <button className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-600 to-amber-500 shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 text-white font-bold text-lg transition-all drop-shadow-md">
+                              {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
+                            </button>
+                            <button className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
+                              <Zap size={18} />
+                              {uiLang === "hi" ? "फ्री ट्रायल शुरू करें" : "Start Free Trial"}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Ultra Plan */}
@@ -8786,10 +8780,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                               ? "कॉमर्स एक्सपर्ट (Ultra)"
                               : "Ultra"}
                           </h4>
-                          <div className="text-4xl font-black text-sky-300 mb-6 drop-shadow-sm">
-                            $199
-                            <span className="text-lg text-gray-500 font-bold">
-                              /mo
+                          <div className="text-4xl font-black text-sky-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
+                            ₹4999
+                            <span className="text-lg text-gray-500 font-bold pb-1">
+                              {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                             </span>
                           </div>
 
@@ -8804,18 +8798,9 @@ Provide information about these plans and features. Persuade them to choose a pl
 
                           <ul className="space-y-3 mb-8 flex-1">
                             {[
-                              uiLang === "hi"
-                                ? "प्रो के सभी फीचर्स"
-                                : "Everything in Pro",
-                              uiLang === "hi"
-                                ? "ऑर्डर प्रोसेसिंग"
-                                : "Order Processing",
-                              uiLang === "hi"
-                                ? "पेमेंट वेरिफिकेशन (UPI)"
-                                : "Payment Verification (UPI)",
-                              uiLang === "hi"
-                                ? "डेडिकेटेड सपोर्ट"
-                                : "Dedicated Support",
+                              uiLang === "hi" ? "रीयल-टाइम वॉयस अलर्ट्स (Ultra)" : "Real-time voice alerts (Ultra)",
+                              uiLang === "hi" ? "ई-मैत्री एक्सक्लूसिव जिंगल" : "E-Maitri exclusive jingle",
+                              uiLang === "hi" ? "अनलिमिटेड एसएमएस सिंक" : "Unlimited SMS sync",
                             ].map((feature, i) => (
                               <li
                                 key={i}
@@ -8830,9 +8815,15 @@ Provide information about these plans and features. Persuade them to choose a pl
                             ))}
                           </ul>
 
-                          <button className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-sky-400 font-bold text-lg transition-colors border border-gray-600 shadow-sm hover:text-white">
-                            {uiLang === "hi" ? "अल्ट्रा पर जाएं" : "Go Ultra"}
-                          </button>
+                          <div className="flex flex-col gap-3">
+                            <button className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-sky-400 font-bold text-lg transition-colors border border-gray-600 shadow-sm hover:text-white">
+                              {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
+                            </button>
+                            <button className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
+                              <Zap size={18} />
+                              {uiLang === "hi" ? "फ्री ट्रायल शुरू करें" : "Start Free Trial"}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -11870,27 +11861,18 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <h4 className="text-2xl font-black text-white mb-2">
                         {uiLang === "hi" ? "लोक मित्र (Basic)" : "Basic"}
                       </h4>
-                      <div className="text-4xl font-black text-gray-300 mb-6 drop-shadow-sm">
-                        $29
-                        <span className="text-lg text-gray-500 font-bold">
-                          /mo
+                      <div className="text-4xl font-black text-gray-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
+                        ₹999
+                        <span className="text-lg text-gray-500 font-bold pb-1">
+                          {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                         </span>
                       </div>
 
                       <ul className="space-y-3 mb-8 flex-1">
                         {[
-                          uiLang === "hi"
-                            ? "मानक AI वॉयस"
-                            : "Standard Voice Models",
-                          uiLang === "hi"
-                            ? "5,000 रिस्पॉन्स / माह"
-                            : "5,000 requests / mo",
-                          uiLang === "hi"
-                            ? "बेसिक एनालिटिक्स"
-                            : "Basic Analytics Dashboard",
-                          uiLang === "hi"
-                            ? "चैट और वॉयस सपोर्ट"
-                            : "Chat & Voice Support",
+                          uiLang === "hi" ? "रीयल-टाइम वॉयस अलर्ट्स (Basic)" : "Real-time voice alerts (Basic)",
+                          uiLang === "hi" ? "ई-मैत्री एक्सक्लूसिव जिंगल" : "E-Maitri exclusive jingle",
+                          uiLang === "hi" ? "अनलिमिटेड एसएमएस सिंक" : "Unlimited SMS sync",
                         ].map((feature, i) => (
                           <li
                             key={i}
@@ -11908,9 +11890,9 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <div className="flex flex-col gap-3">
                         <button
                           onClick={() => handleSelectPlan("basic", false)}
-                          className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg transition-colors border border-gray-600 shadow-sm"
+                          className="w-full py-4 rounded-2xl bg-[#0f9d58] hover:bg-[#0b8043] text-white font-bold text-lg transition-colors shadow-sm"
                         >
-                          {uiLang === "hi" ? "बेसिक चुनें" : "Start Basic"}
+                          {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
                         </button>
                         {!isTrialActive && subscriptionStatus !== "active" && (
                           <button
@@ -11935,10 +11917,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <h4 className="text-2xl font-black text-white mb-2 mt-2">
                         {uiLang === "hi" ? "बिजनेस मैनेजर (Pro)" : "Pro"}
                       </h4>
-                      <div className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)]">
-                        $79
-                        <span className="text-lg text-gray-400 font-bold">
-                          /mo
+                      <div className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)] flex items-end gap-2 flex-wrap">
+                        ₹2499
+                        <span className="text-lg text-gray-400 font-bold pb-1">
+                          {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                         </span>
                       </div>
 
@@ -11953,16 +11935,9 @@ Provide information about these plans and features. Persuade them to choose a pl
 
                       <ul className="space-y-3 mb-8 flex-1">
                         {[
-                          uiLang === "hi"
-                            ? "प्रीमियम AI वॉयस"
-                            : "Premium Voice Models",
-                          uiLang === "hi"
-                            ? "अनलिमिटेड रिस्पॉन्स"
-                            : "Unlimited requests",
-                          uiLang === "hi"
-                            ? "एडवांस्ड एनालिटिक्स"
-                            : "Advanced Analytics & Insights",
-                          uiLang === "hi" ? "लीड कैप्चर" : "Lead Capture",
+                          uiLang === "hi" ? "रीयल-टाइम वॉयस अलर्ट्स (Pro)" : "Real-time voice alerts (Pro)",
+                          uiLang === "hi" ? "ई-मैत्री एक्सक्लूसिव जिंगल" : "E-Maitri exclusive jingle",
+                          uiLang === "hi" ? "अनलिमिटेड एसएमएस सिंक" : "Unlimited SMS sync",
                         ].map((feature, i) => (
                           <li
                             key={i}
@@ -11982,9 +11957,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                           onClick={() => handleSelectPlan("pro", false)}
                           className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-600 to-amber-500 shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 text-white font-bold text-lg transition-all drop-shadow-md"
                         >
-                          {uiLang === "hi"
-                            ? "प्रो सब्सक्राइब करें"
-                            : "Subscribe Pro"}
+                          {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
                         </button>
                         {!isTrialActive && subscriptionStatus !== "active" && (
                           <button
@@ -12005,10 +11978,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <h4 className="text-2xl font-black text-white mb-2">
                         {uiLang === "hi" ? "कॉमर्स एक्सपर्ट (Ultra)" : "Ultra"}
                       </h4>
-                      <div className="text-4xl font-black text-sky-300 mb-6 drop-shadow-sm">
-                        $199
-                        <span className="text-lg text-gray-500 font-bold">
-                          /mo
+                      <div className="text-4xl font-black text-sky-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
+                        ₹4999
+                        <span className="text-lg text-gray-500 font-bold pb-1">
+                          {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                         </span>
                       </div>
 
@@ -12023,18 +11996,9 @@ Provide information about these plans and features. Persuade them to choose a pl
 
                       <ul className="space-y-3 mb-8 flex-1">
                         {[
-                          uiLang === "hi"
-                            ? "प्रो के सभी फीचर्स"
-                            : "Everything in Pro",
-                          uiLang === "hi"
-                            ? "ऑर्डर प्रोसेसिंग"
-                            : "Order Processing",
-                          uiLang === "hi"
-                            ? "पेमेंट वेरिफिकेशन (UPI)"
-                            : "Payment Verification (UPI)",
-                          uiLang === "hi"
-                            ? "डेडिकेटेड सपोर्ट"
-                            : "Dedicated Support",
+                          uiLang === "hi" ? "रीयल-टाइम वॉयस अलर्ट्स (Ultra)" : "Real-time voice alerts (Ultra)",
+                          uiLang === "hi" ? "ई-मैत्री एक्सक्लूसिव जिंगल" : "E-Maitri exclusive jingle",
+                          uiLang === "hi" ? "अनलिमिटेड एसएमएस सिंक" : "Unlimited SMS sync",
                         ].map((feature, i) => (
                           <li
                             key={i}
@@ -12054,7 +12018,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                           onClick={() => handleSelectPlan("ultra", false)}
                           className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-sky-400 font-bold text-lg transition-colors border border-gray-600 shadow-sm hover:text-white"
                         >
-                          {uiLang === "hi" ? "अल्ट्रा पर जाएं" : "Go Ultra"}
+                          {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
                         </button>
                         {!isTrialActive && subscriptionStatus !== "active" && (
                           <button
