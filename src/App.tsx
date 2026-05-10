@@ -258,6 +258,11 @@ const playBeep = (type: "connect" | "disconnect", existingCtx?: any) => {
       shouldClose = true;
     }
     
+    // Always attempt to resume in case it's suspended (e.g. Safari production constraints)
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    
     const playNote = (freq: number, startTime: number, duration: number, attack: number, release: number, volume: number = 0.1) => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -278,7 +283,8 @@ const playBeep = (type: "connect" | "disconnect", existingCtx?: any) => {
       osc.stop(startTime + duration);
     };
 
-    const now = audioCtx.currentTime;
+    // Add slight padding to avoid scheduling in the past
+    const now = audioCtx.currentTime + 0.02;
     
     if (type === "connect") {
       // Soft UI upward beep
