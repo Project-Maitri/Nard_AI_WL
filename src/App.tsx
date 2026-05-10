@@ -247,6 +247,59 @@ const createWavFromPcmBase64 = (
   }
 };
 
+const playBeep = (type: "connect" | "disconnect", existingCtx?: any) => {
+  try {
+    let audioCtx = existingCtx;
+    let shouldClose = false;
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      audioCtx = new AudioContextClass();
+      shouldClose = true;
+    }
+    
+    const playNote = (freq: number, startTime: number, duration: number, attack: number, release: number, volume: number = 0.1) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      // Smooth Gemini-like ambient envelope
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + attack);
+      gain.gain.setValueAtTime(volume, startTime + duration - release);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = audioCtx.currentTime;
+    
+    if (type === "connect") {
+      // Soft UI upward beep
+      playNote(523.25, now, 0.1, 0.02, 0.05, 0.1); // C5
+      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.1); // E5
+    } else {
+      // Soft UI downward beep (louder)
+      playNote(659.25, now, 0.1, 0.02, 0.05, 0.3); // E5
+      playNote(523.25, now + 0.1, 0.15, 0.02, 0.1, 0.3); // C5
+    }
+    
+    if (shouldClose) {
+      setTimeout(() => {
+        if (audioCtx.state !== "closed") audioCtx.close();
+      }, 1000);
+    }
+  } catch(e) {
+    console.warn("Could not play beep", e);
+  }
+};
+
 // Initialize Gemini API safely
 let ai: any = null;
 const initAI = (key: string | null) => {
@@ -6964,6 +7017,7 @@ Provide information about these plans and features. Persuade them to choose a pl
         callbacks: {
           onopen: () => {
             console.log("Live API connected successfully. Session active.");
+            playBeep("connect", audioContextRef.current);
             setIsLiveConnecting(false);
             isSessionActiveRef.current = true;
             setIsSessionActive(true);
@@ -7391,6 +7445,9 @@ Provide information about these plans and features. Persuade them to choose a pl
   };
 
   const stopLiveAudio = () => {
+    if (isSessionActiveRef.current) {
+      playBeep("disconnect", audioContextRef.current);
+    }
     isSessionActiveRef.current = false;
     setIsSessionActive(false);
     setIsLiveConnecting(false);
@@ -7438,7 +7495,10 @@ Provide information about these plans and features. Persuade them to choose a pl
       navigator.mediaSession.playbackState = "none";
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      const oldCtx = audioContextRef.current;
+      setTimeout(() => {
+        if (oldCtx.state !== 'closed') oldCtx.close();
+      }, 1000);
       audioContextRef.current = null;
     }
     if (analyserRef.current) {
