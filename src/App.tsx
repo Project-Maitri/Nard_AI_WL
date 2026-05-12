@@ -19,7 +19,6 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { fetchUserData, syncUserData, fetchUserChats, syncUserChats } from './utils/firebaseSync';
 import { FirebaseSync } from './components/FirebaseSync';
-import { QRCodeSVG } from "qrcode.react";
 import {
   GoogleGenAI,
   ThinkingLevel,
@@ -288,12 +287,12 @@ const playBeep = (type: "connect" | "disconnect", existingCtx?: any) => {
     
     if (type === "connect") {
       // Soft UI upward beep
-      playNote(523.25, now, 0.1, 0.02, 0.05, 0.6); // C5
-      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.6); // E5
+      playNote(523.25, now, 0.1, 0.02, 0.05, 0.85); // C5
+      playNote(659.25, now + 0.1, 0.15, 0.02, 0.1, 0.85); // E5
     } else {
       // Soft UI downward beep
-      playNote(659.25, now, 0.1, 0.02, 0.05, 0.6); // E5
-      playNote(523.25, now + 0.1, 0.15, 0.02, 0.1, 0.6); // C5
+      playNote(659.25, now, 0.1, 0.02, 0.05, 0.85); // E5
+      playNote(523.25, now + 0.1, 0.15, 0.02, 0.1, 0.85); // C5
     }
     
     if (shouldClose) {
@@ -3548,6 +3547,7 @@ export default function App({ clientId }: AppProps = {}) {
 
   const [setupName, setSetupName] = useState("");
   const [isEditingBotName, setIsEditingBotName] = useState(false);
+  const [showPlanWidget, setShowPlanWidget] = useState(false);
 
   const [inventoryState, setInventoryState] = useState<any[]>(() => {
     try {
@@ -4128,11 +4128,33 @@ export default function App({ clientId }: AppProps = {}) {
         window.speechSynthesis.speak(msg);
       }
     } else {
+      try {
+        const saved = safeStorage.getItem("nard_global_config");
+        let planPrice = 4999;
+        let upiId = "nard@masterupi";
+        let bi = "Nard Inc";
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (pendingTrialPlan === "basic") planPrice = parsed.pricingBasic || 999;
+          if (pendingTrialPlan === "pro") planPrice = parsed.pricingPro || 2499;
+          if (pendingTrialPlan === "ultra") planPrice = parsed.pricingUltra || 4999;
+          upiId = parsed.paymentUpi || "nard@masterupi";
+          bi = parsed.businessName || "Nard Inc";
+        } else {
+          if (pendingTrialPlan === "basic") planPrice = 999;
+          if (pendingTrialPlan === "pro") planPrice = 2499;
+          if (pendingTrialPlan === "ultra") planPrice = 4999;
+        }
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+        setPaymentUrl(upiUrl);
+        setSubscriptionStatus("pending_payment");
+      } catch (e) {}
+
       if ("speechSynthesis" in window) {
         const msg = new SpeechSynthesisUtterance(
           uiLang === "hi"
-            ? "लॉगिन सफल रहा।"
-            : "Login successful."
+            ? "लॉगिन सफल रहा। कृपया भुगतान पूरा करें।"
+            : "Login successful. Please complete the payment."
         );
         msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
         window.speechSynthesis.speak(msg);
@@ -6603,6 +6625,9 @@ Provide information about these plans and features. Persuade them to choose a pl
       }
     }
 
+    // Play connect beep synchronously during user gesture to completely unlock audio context on PWAs
+    playBeep("connect", audioCtx);
+
     setIsLiveConnecting(true);
     setShowLiveWelcomeAnimation(true);
     setShowGreetingMessage(false);
@@ -6932,6 +6957,8 @@ Here are the pricing plans available for BOTH the Nard Hosted Platform and Float
 - Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
 - Ultra Plan (Commerce Expert): ₹4999/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
 
+CRITICAL INSTRUCTION FOR TOOL CALLS: Whenever a user talks about a plan, purchasing a subscription, getting pricing, or wanting to buy ANY plan, YOU ABSOLUTELY MUST CALL THE "show_plan_widget" TOOL as part of your answer. This displays the subscription cards on their screen.
+
 Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
       }
@@ -6959,6 +6986,8 @@ Provide information about these plans and features. Persuade them to choose a pl
       const currentLanguageName = langMapForInstruction[uiLang] || "English";
 
       liveInstruction += `\n\nCRITICAL: The user has selected ${currentLanguageName} as their preferred language. You MUST speak and respond ONLY in ${currentLanguageName} unless the user explicitly asks you to speak in another language.`;
+
+      liveInstruction += `\n\nCRITICAL INSTRUCTION FOR TOOL CALLS: Whenever a user asks about pricing, plans, purchasing a subscription, or wanting to buy ANY plan, YOU ABSOLUTELY MUST CALL THE "show_plan_widget" TOOL as part of your answer to display the plan choices.`;
 
       if (currentRole?.id !== "sales") {
         const currentBotName = currentRole ? (demoBotName.trim() || currentRole.name) : (userName.trim() || "Nard");
@@ -7025,16 +7054,24 @@ Provide information about these plans and features. Persuade them to choose a pl
               prebuiltVoiceConfig: { voiceName: premiumVoiceRef.current },
             },
           },
+          tools: [{
+            functionDeclarations: [
+              {
+                name: "show_plan_widget",
+                description: "Shows a billing plan widget on the user's screen when they ask to see a plan or pricing information.",
+                parameters: {
+                  type: "object",
+                  properties: {},
+                }
+              }
+            ]
+          }],
           outputAudioTranscription: { model: "models/gemini-3.1-flash-live-preview" } as any,
           inputAudioTranscription: { model: "models/gemini-3.1-flash-live-preview" } as any,
         },
         callbacks: {
           onopen: () => {
             console.log("Live API connected successfully. Session active.");
-            // Give the OS 150ms extra to stabilize audio routing before playing beep
-            setTimeout(() => {
-              playBeep("connect", audioContextRef.current);
-            }, 150);
             setIsLiveConnecting(false);
             isSessionActiveRef.current = true;
             setIsSessionActive(true);
@@ -7113,6 +7150,26 @@ Provide information about these plans and features. Persuade them to choose a pl
             if (message.serverContent?.modelTurn) {
               isModelGeneratingRef.current = true;
             }
+            if (message.toolCall) {
+              const calls = message.toolCall.functionCalls;
+              if (calls?.length) {
+                for (const call of calls) {
+                  if (call.name === "show_plan_widget") {
+                    setShowPlanWidget(true);
+                    sessionPromiseRef.current?.then((s) => {
+                      s.sendToolResponse({
+                        functionResponses: [{
+                          id: call.id,
+                          name: call.name,
+                          response: { result: "Plan widget displayed successfully on user's screen." }
+                        }]
+                      });
+                    });
+                  }
+                }
+              }
+            }
+
             const parts = message.serverContent?.modelTurn?.parts;
             let incomingText = "";
             if (parts) {
@@ -8064,7 +8121,7 @@ Provide information about these plans and features. Persuade them to choose a pl
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+              className="fixed inset-0 z-[9999999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -8130,45 +8187,40 @@ Provide information about these plans and features. Persuade them to choose a pl
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[100000] bg-gray-950/90 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[9999999] bg-gray-950/90 backdrop-blur-sm flex items-center justify-center p-4 relative"
           >
-            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[40px] max-w-sm w-full flex flex-col items-center justify-center text-center shadow-[0_0_50px_rgba(79,70,229,0.2)]">
+            <div className="bg-gray-900 border border-gray-800 p-8 rounded-[40px] max-w-sm w-full flex flex-col items-center justify-center text-center shadow-[0_0_50px_rgba(79,70,229,0.2)] relative">
+              <button
+                onClick={() => setSubscriptionStatus("inactive")}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 p-2 rounded-full transition-colors z-10"
+              >
+                <X size={20} />
+              </button>
               {subscriptionStatus === "pending_payment" ? (
                 <>
                   <h3 className="text-2xl font-black text-white mb-4">
                     {uiLang === "hi" ? "भुगतान करें" : "Complete Payment"}
                   </h3>
-                  <div className="bg-white p-4 rounded-2xl mb-6 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                    <QRCodeSVG
-                      value={paymentUrl}
-                      size={200}
-                      bgColor={"#ffffff"}
-                      fgColor={"#000000"}
-                      level={"L"}
-                      className="rounded-lg"
-                    />
+                  
+                  <div className="bg-emerald-900/30 p-8 rounded-[32px] mb-6 flex flex-col items-center border border-emerald-500/30">
+                    <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-300 font-medium text-center mb-6">
+                      {uiLang === "hi"
+                        ? "अपने मोबाइल के किसी भी UPI ऐप (जैसे PhonePe, GPay, Paytm) से भुगतान करें।"
+                        : "Pay using any UPI app on your mobile (like PhonePe, GPay, Paytm)."}
+                    </p>
+                    <a
+                      href={paymentUrl}
+                      className="w-full py-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2"
+                    >
+                      {uiLang === "hi" ? "UPI ऐप खोलें और भुगतान करें" : "Open UPI App & Pay"}
+                    </a>
                   </div>
-                  <p className="text-gray-400 font-medium mb-6">
-                    {uiLang === "hi"
-                      ? "भुगतान करने के लिए किसी भी UPI ऐप (जैसे PhonePe, GPay) से स्कैन करें"
-                      : "Scan with any UPI app (like PhonePe, GPay) to pay"}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSubscriptionStatus("verifying");
-                      if ("speechSynthesis" in window) {
-                        window.speechSynthesis.cancel();
-                        const msg = new SpeechSynthesisUtterance(
-                          uiLang === "hi" ? "पुष्टि हो रही है..." : "Verifying..."
-                        );
-                        msg.lang = uiLang === "hi" ? "hi-IN" : "en-US";
-                        window.speechSynthesis.speak(msg);
-                      }
-                    }}
-                    className="w-full py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
-                  >
-                    {uiLang === "hi" ? "मैंने भुगतान कर दिया है" : "I have paid"}
-                  </button>
+
                   <button
                     onClick={() => {
                       setSubscriptionStatus("inactive");
@@ -8270,6 +8322,9 @@ Provide information about these plans and features. Persuade them to choose a pl
               }}
               onStartFreeTrial={(selectedPlan) => {
                 handleSelectPlan(selectedPlan, true);
+              }}
+              onBuyPlan={(selectedPlan) => {
+                handleSelectPlan(selectedPlan, false);
               }}
             />
 
@@ -8785,10 +8840,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                           </ul>
 
                           <div className="flex flex-col gap-3">
-                            <button className="w-full py-4 rounded-2xl bg-[#0f9d58] hover:bg-[#0b8043] text-white font-bold text-lg transition-colors shadow-sm">
+                            <button onClick={() => handleSelectPlan("basic", false)} className="w-full py-4 rounded-2xl bg-[#0f9d58] hover:bg-[#0b8043] text-white font-bold text-lg transition-colors shadow-sm">
                               {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
                             </button>
-                            <button className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
+                            <button onClick={() => handleSelectPlan("basic", true)} className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
                               <Zap size={18} />
                               {uiLang === "hi" ? "फ्री ट्रायल शुरू करें" : "Start Free Trial"}
                             </button>
@@ -8840,10 +8895,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                           </ul>
 
                           <div className="flex flex-col gap-3">
-                            <button className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-600 to-amber-500 shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 text-white font-bold text-lg transition-all drop-shadow-md">
+                            <button onClick={() => handleSelectPlan("pro", false)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-600 to-amber-500 shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 text-white font-bold text-lg transition-all drop-shadow-md">
                               {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
                             </button>
-                            <button className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
+                            <button onClick={() => handleSelectPlan("pro", true)} className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
                               <Zap size={18} />
                               {uiLang === "hi" ? "फ्री ट्रायल शुरू करें" : "Start Free Trial"}
                             </button>
@@ -8893,10 +8948,10 @@ Provide information about these plans and features. Persuade them to choose a pl
                           </ul>
 
                           <div className="flex flex-col gap-3">
-                            <button className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-sky-400 font-bold text-lg transition-colors border border-gray-600 shadow-sm hover:text-white">
+                            <button onClick={() => handleSelectPlan("ultra", false)} className="w-full py-4 rounded-2xl bg-gray-700 hover:bg-gray-600 text-sky-400 font-bold text-lg transition-colors border border-gray-600 shadow-sm hover:text-white">
                               {uiLang === "hi" ? "प्लान खरीदें (UPI)" : "Buy Plan (UPI)"}
                             </button>
-                            <button className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
+                            <button onClick={() => handleSelectPlan("ultra", true)} className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/50 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center justify-center gap-2">
                               <Zap size={18} />
                               {uiLang === "hi" ? "फ्री ट्रायल शुरू करें" : "Start Free Trial"}
                             </button>
@@ -11378,6 +11433,192 @@ Provide information about these plans and features. Persuade them to choose a pl
         </AnimatePresence>
       </div>
 
+      {/* Plan Widget Popup */}
+      <AnimatePresence>
+        {showPlanWidget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-600/20 via-black/80 to-black pointer-events-none" />
+
+            <motion.div
+              initial={{ scale: 0.9, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 30, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900/90 border border-gray-700/50 rounded-[30px] shadow-[0_0_50px_rgba(59,130,246,0.25)] backdrop-blur-2xl hide-scrollbar"
+            >
+              {/* Glowing Top Left Edge */}
+              <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/20 rounded-full blur-[40px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+
+              <div className="p-6 sm:p-8 relative z-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-gray-800 border-2 border-gray-700 rounded-full flex items-center justify-center mb-4 shadow-inner relative">
+                  <div
+                    className="absolute inset-0 bg-blue-500/10 rounded-full animate-ping"
+                    style={{ animationDuration: "3s" }}
+                  />
+                  <Zap size={28} className="text-blue-400" />
+                </div>
+
+                <h2 className="text-3xl font-black text-white mb-2 font-mukta">
+                  {uiLang === "hi" ? "हमारे प्रीमियम प्लान्स" : "Our Premium Plans"}
+                </h2>
+
+                <p className="text-gray-300 text-sm sm:text-base mb-8 max-w-2xl mx-auto">
+                  {uiLang === "hi"
+                    ? "अपने बिज़नेस को नेक्स्ट लेवल पर ले जाने के लिए नॉर्ड का सब्सक्रिप्शन चुनें।"
+                    : "Choose a Nard subscription to take your business to the next level."}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+                  {/* Basic Plan */}
+                  <div className="flex flex-col bg-gray-800/50 border border-gray-700 rounded-2xl p-6 relative group overflow-hidden">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold text-white mb-1">Basic</h3>
+                      <p className="text-gray-400 text-sm">{uiLang === "hi" ? "शुरुआती लोगों के लिए" : "For beginners"}</p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-3xl font-black text-white">₹999</span>
+                      <span className="text-gray-400 text-sm">/mo</span>
+                    </div>
+                    <ul className="flex-1 space-y-3 mb-6">
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> 1K messages/mo</li>
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Basic AI Bot</li>
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Floating Widget</li>
+                      <li className="flex items-start gap-2 text-gray-500 text-sm"><X size={16} className="text-red-400 mt-0.5 shrink-0" /> No Voice Chat</li>
+                    </ul>
+                    <button onClick={() => {
+                      setTrialPlan("basic");
+                      setShowPlanWidget(false);
+                      try {
+                        const saved = safeStorage.getItem("nard_global_config");
+                        let planPrice = 999;
+                        let upiId = "nard@masterupi";
+                        let bi = "Nard Inc";
+                        if (saved) {
+                          const parsed = JSON.parse(saved);
+                          planPrice = parsed.pricingBasic || 999;
+                          upiId = parsed.paymentUpi || "nard@masterupi";
+                          bi = parsed.businessName || "Nard Inc";
+                        }
+                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+                        setPaymentUrl(upiUrl);
+                        setSubscriptionStatus("pending_payment");
+                        const a = document.createElement("a");
+                        a.href = upiUrl;
+                        a.click();
+                      } catch (e) {}
+                    }} className="w-full py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-colors">
+                      {uiLang === "hi" ? "प्लान चुनें" : "Choose Plan"}
+                    </button>
+                  </div>
+
+                  {/* Pro Plan */}
+                  <div className="flex flex-col bg-blue-900/30 border-2 border-blue-500 rounded-2xl p-6 relative group transform md:-translate-y-4 shadow-[0_10px_30px_rgba(59,130,246,0.2)]">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-blue-500" />
+                    <div className="absolute top-3 right-3 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Most Popular
+                    </div>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold text-white mb-1">Pro</h3>
+                      <p className="text-blue-200 text-sm">{uiLang === "hi" ? "बढ़ते बिज़नेस के लिए" : "For growing businesses"}</p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-3xl font-black text-white">₹2499</span>
+                      <span className="text-blue-200 text-sm">/mo</span>
+                    </div>
+                    <ul className="flex-1 space-y-3 mb-6">
+                      <li className="flex items-start gap-2 text-blue-100 text-sm"><Check size={16} className="text-blue-400 mt-0.5 shrink-0" /> 10K messages/mo</li>
+                      <li className="flex items-start gap-2 text-blue-100 text-sm"><Check size={16} className="text-blue-400 mt-0.5 shrink-0" /> Advanced AI Bot</li>
+                      <li className="flex items-start gap-2 text-blue-100 text-sm"><Check size={16} className="text-blue-400 mt-0.5 shrink-0" /> Live Voice Chat</li>
+                      <li className="flex items-start gap-2 text-blue-100 text-sm"><Check size={16} className="text-blue-400 mt-0.5 shrink-0" /> WhatsApp Integration</li>
+                    </ul>
+                    <button onClick={() => {
+                      setTrialPlan("pro");
+                      setShowPlanWidget(false);
+                      try {
+                        const saved = safeStorage.getItem("nard_global_config");
+                        let planPrice = 2499;
+                        let upiId = "nard@masterupi";
+                        let bi = "Nard Inc";
+                        if (saved) {
+                          const parsed = JSON.parse(saved);
+                          planPrice = parsed.pricingPro || 2499;
+                          upiId = parsed.paymentUpi || "nard@masterupi";
+                          bi = parsed.businessName || "Nard Inc";
+                        }
+                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+                        setPaymentUrl(upiUrl);
+                        setSubscriptionStatus("pending_payment");
+                        const a = document.createElement("a");
+                        a.href = upiUrl;
+                        a.click();
+                      } catch (e) {}
+                    }} className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30 transition-colors">
+                      {uiLang === "hi" ? "प्लान चुनें" : "Choose Plan"}
+                    </button>
+                  </div>
+
+                  {/* Ultra Plan */}
+                  <div className="flex flex-col bg-gray-800/50 border border-gray-700 rounded-2xl p-6 relative group overflow-hidden">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold text-white mb-1">Ultra</h3>
+                      <p className="text-gray-400 text-sm">{uiLang === "hi" ? "सभी फीचर्स के साथ" : "Full power enabled"}</p>
+                    </div>
+                    <div className="mb-6">
+                      <span className="text-3xl font-black text-white">₹4999</span>
+                      <span className="text-gray-400 text-sm">/mo</span>
+                    </div>
+                    <ul className="flex-1 space-y-3 mb-6">
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Unlimited messages</li>
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Deep Analytics</li>
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Dedicated Account Mgr</li>
+                      <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Custom Voice Cloning</li>
+                    </ul>
+                    <button onClick={() => {
+                      setTrialPlan("ultra");
+                      setShowPlanWidget(false);
+                      try {
+                        const saved = safeStorage.getItem("nard_global_config");
+                        let planPrice = 4999;
+                        let upiId = "nard@masterupi";
+                        let bi = "Nard Inc";
+                        if (saved) {
+                          const parsed = JSON.parse(saved);
+                          planPrice = parsed.pricingUltra || 4999;
+                          upiId = parsed.paymentUpi || "nard@masterupi";
+                          bi = parsed.businessName || "Nard Inc";
+                        }
+                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+                        setPaymentUrl(upiUrl);
+                        setSubscriptionStatus("pending_payment");
+                        const a = document.createElement("a");
+                        a.href = upiUrl;
+                        a.click();
+                      } catch (e) {}
+                    }} className="w-full py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-colors">
+                      {uiLang === "hi" ? "प्लान चुनें" : "Choose Plan"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex w-full">
+                  <button
+                    onClick={() => setShowPlanWidget(false)}
+                    className="mx-auto px-8 py-3 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition-all text-sm font-bold"
+                  >
+                    {uiLang === "hi" ? "बंद करें" : "Close"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Final Offer Popup */}
       <AnimatePresence>
         {showFinalOfferPopup && (
@@ -11385,7 +11626,7 @@ Provide information about these plans and features. Persuade them to choose a pl
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
           >
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-red-600/20 via-black/80 to-black pointer-events-none" />
 
@@ -11505,7 +11746,7 @@ Provide information about these plans and features. Persuade them to choose a pl
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.95, y: 20, opacity: 0 }}

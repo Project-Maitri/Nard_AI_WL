@@ -42,6 +42,7 @@ interface ClientDashboardProps {
   trialPlan?: "basic" | "pro" | "ultra";
   onCancelAccess?: () => void;
   onStartFreeTrial?: (plan: "basic" | "pro" | "ultra") => void;
+  onBuyPlan?: (plan: "basic" | "pro" | "ultra") => void;
 }
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({
@@ -52,6 +53,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   trialPlan,
   onCancelAccess,
   onStartFreeTrial,
+  onBuyPlan,
 }) => {
   const [activeTab, setActiveTab] = useState<"business" | "store">("business");
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | "ultra">(
@@ -504,21 +506,25 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       </div>
                       <button
                         onClick={() => {
-                          if ("speechSynthesis" in window) {
-                            window.speechSynthesis.cancel();
-                            const msg = new SpeechSynthesisUtterance(
-                              uiLang === "hi"
-                                ? "पुष्टि हो रही है..."
-                                : "Verifying..."
-                            );
-                            msg.lang = uiLang === "hi" ? "hi-IN" : "en-US";
-                            msg.volume = 0; // Play silently just to unlock the audio context for the actual success message later
-                            window.speechSynthesis.speak(msg);
+                          if (onBuyPlan) {
+                            onBuyPlan(selectedPlan);
+                          } else {
+                            if ("speechSynthesis" in window) {
+                              window.speechSynthesis.cancel();
+                              const msg = new SpeechSynthesisUtterance(
+                                uiLang === "hi"
+                                  ? "पुष्टि हो रही है..."
+                                  : "Verifying..."
+                              );
+                              msg.lang = uiLang === "hi" ? "hi-IN" : "en-US";
+                              msg.volume = 0;
+                              window.speechSynthesis.speak(msg);
+                            }
+                            const a = document.createElement("a");
+                            a.href = generatedUpiUrl;
+                            a.click();
+                            setSubscriptionStatus("verifying");
                           }
-                          const a = document.createElement("a");
-                          a.href = generatedUpiUrl;
-                          a.click();
-                          setSubscriptionStatus("verifying");
                         }}
                         className={`w-full py-4 text-white font-bold rounded-xl transition-colors shadow-[0_0_20px_rgba(16,185,129,0.4)] bg-emerald-600 hover:bg-emerald-500 text-lg`}
                       >
