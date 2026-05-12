@@ -29,6 +29,7 @@ import {
   Send,
   ArrowUp,
   ArrowLeft,
+  ArrowRight,
   Mic,
   MicOff,
   Volume2,
@@ -3348,7 +3349,7 @@ export default function App({ clientId }: AppProps = {}) {
 
   const [freeTrialEnd, setFreeTrialEnd] = useState<number | null>(() => {
     try {
-      const saved = safeStorage.getItem("nard_free_trial_end_v1");
+      const saved = safeStorage.getItem("nard_free_trial_end_v2");
       return saved ? parseInt(saved, 10) : null;
     } catch {
       return null;
@@ -3357,7 +3358,7 @@ export default function App({ clientId }: AppProps = {}) {
 
   const [trialPlan, setTrialPlan] = useState<"basic" | "pro" | "ultra">(() => {
     return (
-      (safeStorage.getItem("nard_trial_plan_v1") as
+      (safeStorage.getItem("nard_trial_plan_v2") as
         | "basic"
         | "pro"
         | "ultra") || "ultra"
@@ -3434,8 +3435,8 @@ export default function App({ clientId }: AppProps = {}) {
 
   useEffect(() => {
     if (freeTrialEnd !== null) {
-      safeStorage.setItem("nard_free_trial_end_v1", freeTrialEnd.toString());
-      safeStorage.setItem("nard_trial_plan_v1", trialPlan);
+      safeStorage.setItem("nard_free_trial_end_v2", freeTrialEnd.toString());
+      safeStorage.setItem("nard_trial_plan_v2", trialPlan);
     }
   }, [freeTrialEnd, trialPlan]);
 
@@ -4089,14 +4090,70 @@ export default function App({ clientId }: AppProps = {}) {
   const [authPhone, setAuthPhone] = useState("");
   const [authOtp, setAuthOtp] = useState(["", "", "", "", "", ""]);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [showTrialAlert, setShowTrialAlert] = useState(false);
 
   const handleSelectPlan = (plan: "basic" | "pro" | "ultra", isFreeTrial: boolean) => {
+    if (isFreeTrial && isTrialActive) {
+      setShowTrialAlert(true);
+      return;
+    }
+    
+    // Temporarily bypassing login function
     setPendingTrialPlan(plan);
     setIsPendingFreeTrial(isFreeTrial);
-    setAuthStep("method");
-    setAuthPhone("");
-    setAuthOtp(["", "", "", "", "", ""]);
-    setShowAuthModal(true);
+    setTrialPlan(plan);
+    setShowPathModal(false);
+    setShowLandingPage(false);
+    setShowClientPanel(true);
+
+    if (isFreeTrial) {
+      setFreeTrialEnd(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+      try {
+        safeStorage.removeItem("nard_final_offer_seen");
+      } catch (e) {}
+
+      if ("speechSynthesis" in window) {
+        const msg = new SpeechSynthesisUtterance(
+          uiLang === "hi"
+            ? "आपका फ्री ट्रायल शुरू हो गया है।"
+            : "Your free trial has started."
+        );
+        msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
+        window.speechSynthesis.speak(msg);
+      }
+    } else {
+      try {
+        const saved = safeStorage.getItem("nard_global_config");
+        let planPrice = 4999;
+        let upiId = "nard@masterupi";
+        let bi = "Nard Inc";
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (plan === "basic") planPrice = parsed.pricingBasic || 999;
+          if (plan === "pro") planPrice = parsed.pricingPro || 2499;
+          if (plan === "ultra") planPrice = parsed.pricingUltra || 4999;
+          upiId = parsed.paymentUpi || "nard@masterupi";
+          bi = parsed.businessName || "Nard Inc";
+        } else {
+          if (plan === "basic") planPrice = 999;
+          if (plan === "pro") planPrice = 2499;
+          if (plan === "ultra") planPrice = 4999;
+        }
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+        setPaymentUrl(upiUrl);
+        setSubscriptionStatus("pending_payment");
+      } catch (e) {}
+
+      if ("speechSynthesis" in window) {
+        const msg = new SpeechSynthesisUtterance(
+          uiLang === "hi"
+            ? "कृपया भुगतान पूरा करें।"
+            : "Please complete the payment."
+        );
+        msg.lang = uiLang === "hi" ? "hi-IN" : "en-IN";
+        window.speechSynthesis.speak(msg);
+      }
+    }
   };
 
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
@@ -4113,7 +4170,7 @@ export default function App({ clientId }: AppProps = {}) {
     setShowClientPanel(true);
 
     if (isPendingFreeTrial) {
-      setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
+      setFreeTrialEnd(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
       try {
         safeStorage.removeItem("nard_final_offer_seen");
       } catch (e) {}
@@ -6957,9 +7014,9 @@ Here are the pricing plans available for BOTH the Nard Hosted Platform and Float
 - Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
 - Ultra Plan (Commerce Expert): ₹4999/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
 
-CRITICAL INSTRUCTION FOR TOOL CALLS: Whenever a user talks about a plan, purchasing a subscription, getting pricing, or wanting to buy ANY plan, YOU ABSOLUTELY MUST CALL THE "show_plan_widget" TOOL as part of your answer. This displays the subscription cards on their screen.
+CRITICAL INSTRUCTION FOR TOOL CALLS: When a user asks about plans or pricing, you MUST FIRST ask them to clarify if they want a floating icon for their app/website or if they want to start their business using Nard's hosted platform. DO NOT call the "show_plan_widget" tool until they have confirmed their choice. Once they confirm, then you MUST CALL THE "show_plan_widget" TOOL as part of your answer.
 
-Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
+Provide information about these plans and features. Persuade them to choose a plan and encourage them to start with a 3-day free trial to understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
       }
 
@@ -6987,7 +7044,7 @@ Provide information about these plans and features. Persuade them to choose a pl
 
       liveInstruction += `\n\nCRITICAL: The user has selected ${currentLanguageName} as their preferred language. You MUST speak and respond ONLY in ${currentLanguageName} unless the user explicitly asks you to speak in another language.`;
 
-      liveInstruction += `\n\nCRITICAL INSTRUCTION FOR TOOL CALLS: Whenever a user asks about pricing, plans, purchasing a subscription, or wanting to buy ANY plan, YOU ABSOLUTELY MUST CALL THE "show_plan_widget" TOOL as part of your answer to display the plan choices.`;
+      liveInstruction += `\n\nCRITICAL INSTRUCTION FOR TOOL CALLS: When a user asks about pricing, plans, purchasing a subscription, or wanting to buy ANY plan, you MUST FIRST ask them to clarify if they want a floating icon for their app/website or if they want to start their business using Nard's hosted platform. DO NOT call the "show_plan_widget" tool until they have confirmed their choice. Once they confirm, then you MUST CALL THE "show_plan_widget" TOOL as part of your answer, show the plans, and persuade them to start with a 3-day free trial.`;
 
       if (currentRole?.id !== "sales") {
         const currentBotName = currentRole ? (demoBotName.trim() || currentRole.name) : (userName.trim() || "Nard");
@@ -8187,7 +8244,7 @@ Provide information about these plans and features. Persuade them to choose a pl
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[9999999] bg-gray-950/90 backdrop-blur-sm flex items-center justify-center p-4 relative"
+            className="fixed inset-0 z-[9999999] bg-gray-950 flex items-center justify-center p-4"
           >
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-[40px] max-w-sm w-full flex flex-col items-center justify-center text-center shadow-[0_0_50px_rgba(79,70,229,0.2)] relative">
               <button
@@ -8317,7 +8374,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                 setSubscriptionStatus("inactive");
                 setFreeTrialEnd(null);
                 try {
-                  safeStorage.removeItem("nard_free_trial_end_v1");
+                  safeStorage.removeItem("nard_free_trial_end_v2");
                 } catch (e) {}
               }}
               onStartFreeTrial={(selectedPlan) => {
@@ -8464,6 +8521,31 @@ Provide information about these plans and features. Persuade them to choose a pl
             </div>
 
             <div className="relative z-10 flex flex-col items-center pt-8 md:pt-16 pb-24 px-6 w-full max-w-6xl mx-auto">
+              {/* Stylish Client Dashboard Quick Access Widget */}
+              <div className="w-full max-w-2xl mx-auto mb-10 w-full">
+                <button
+                  onClick={() => setShowClientPanel(true)}
+                  className="w-full py-4 sm:py-5 rounded-[32px] bg-gradient-to-br from-emerald-900/40 to-gray-900/80 border border-emerald-500/30 shadow-[0_10px_30px_rgba(16,185,129,0.15)] flex items-center justify-between px-6 sm:px-8 hover:shadow-[0_15px_40px_rgba(16,185,129,0.3)] hover:border-emerald-500/50 transition-all duration-300 group backdrop-blur-md"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-500/30 transition-transform shadow-inner">
+                      <ShieldAlert size={28} className="drop-shadow-lg" />
+                    </div>
+                    <div className="text-left flex flex-col justify-center">
+                      <h3 className="text-white font-extrabold text-lg sm:text-2xl leading-tight mb-1 drop-shadow-md tracking-wide">
+                        {uiLang === "hi" ? "क्लाइंट डैशबोर्ड देखें" : "Client Dashboard"}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-emerald-100/70 font-medium tracking-wide">
+                        {uiLang === "hi" ? "अपनी सेटिंग्स और एनालिटिक्स मैनेज करें" : "Manage your settings and analytics"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-emerald-800/50 flex items-center justify-center text-white group-hover:text-amber-300 group-hover:bg-emerald-600 transition-colors shadow-md">
+                    <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+              </div>
+
               {/* Moved Identity Section (Hidden as per user instructions) */}
 
               {/* Free Trial Full Activation Widget */}
@@ -8492,7 +8574,11 @@ Provide information about these plans and features. Persuade them to choose a pl
 
                   <button
                     onClick={() => {
-                      setShowPathModal(true);
+                      if (isTrialActive) {
+                        setShowTrialAlert(true);
+                      } else {
+                        setShowPathModal(true);
+                      }
                     }}
                     className="relative w-full max-w-md py-4 sm:py-5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:shadow-[0_0_30px_rgba(245,158,11,0.7)] transition-all overflow-hidden group hover:-translate-y-1"
                   >
@@ -9284,7 +9370,11 @@ Provide information about these plans and features. Persuade them to choose a pl
 
                       <button
                         onClick={() => {
-                          setShowPathModal(true);
+                          if (isTrialActive) {
+                            setShowTrialAlert(true);
+                          } else {
+                            setShowPathModal(true);
+                          }
                         }}
                         className="relative w-full max-w-md py-4 sm:py-5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:shadow-[0_0_30px_rgba(245,158,11,0.7)] transition-all overflow-hidden group hover:-translate-y-1"
                       >
@@ -11491,26 +11581,8 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <li className="flex items-start gap-2 text-gray-500 text-sm"><X size={16} className="text-red-400 mt-0.5 shrink-0" /> No Voice Chat</li>
                     </ul>
                     <button onClick={() => {
-                      setTrialPlan("basic");
                       setShowPlanWidget(false);
-                      try {
-                        const saved = safeStorage.getItem("nard_global_config");
-                        let planPrice = 999;
-                        let upiId = "nard@masterupi";
-                        let bi = "Nard Inc";
-                        if (saved) {
-                          const parsed = JSON.parse(saved);
-                          planPrice = parsed.pricingBasic || 999;
-                          upiId = parsed.paymentUpi || "nard@masterupi";
-                          bi = parsed.businessName || "Nard Inc";
-                        }
-                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
-                        setPaymentUrl(upiUrl);
-                        setSubscriptionStatus("pending_payment");
-                        const a = document.createElement("a");
-                        a.href = upiUrl;
-                        a.click();
-                      } catch (e) {}
+                      handleSelectPlan("basic", false);
                     }} className="w-full py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-colors">
                       {uiLang === "hi" ? "प्लान चुनें" : "Choose Plan"}
                     </button>
@@ -11537,26 +11609,8 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <li className="flex items-start gap-2 text-blue-100 text-sm"><Check size={16} className="text-blue-400 mt-0.5 shrink-0" /> WhatsApp Integration</li>
                     </ul>
                     <button onClick={() => {
-                      setTrialPlan("pro");
                       setShowPlanWidget(false);
-                      try {
-                        const saved = safeStorage.getItem("nard_global_config");
-                        let planPrice = 2499;
-                        let upiId = "nard@masterupi";
-                        let bi = "Nard Inc";
-                        if (saved) {
-                          const parsed = JSON.parse(saved);
-                          planPrice = parsed.pricingPro || 2499;
-                          upiId = parsed.paymentUpi || "nard@masterupi";
-                          bi = parsed.businessName || "Nard Inc";
-                        }
-                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
-                        setPaymentUrl(upiUrl);
-                        setSubscriptionStatus("pending_payment");
-                        const a = document.createElement("a");
-                        a.href = upiUrl;
-                        a.click();
-                      } catch (e) {}
+                      handleSelectPlan("pro", false);
                     }} className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30 transition-colors">
                       {uiLang === "hi" ? "प्लान चुनें" : "Choose Plan"}
                     </button>
@@ -11579,26 +11633,8 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <li className="flex items-start gap-2 text-gray-300 text-sm"><Check size={16} className="text-green-400 mt-0.5 shrink-0" /> Custom Voice Cloning</li>
                     </ul>
                     <button onClick={() => {
-                      setTrialPlan("ultra");
                       setShowPlanWidget(false);
-                      try {
-                        const saved = safeStorage.getItem("nard_global_config");
-                        let planPrice = 4999;
-                        let upiId = "nard@masterupi";
-                        let bi = "Nard Inc";
-                        if (saved) {
-                          const parsed = JSON.parse(saved);
-                          planPrice = parsed.pricingUltra || 4999;
-                          upiId = parsed.paymentUpi || "nard@masterupi";
-                          bi = parsed.businessName || "Nard Inc";
-                        }
-                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
-                        setPaymentUrl(upiUrl);
-                        setSubscriptionStatus("pending_payment");
-                        const a = document.createElement("a");
-                        a.href = upiUrl;
-                        a.click();
-                      } catch (e) {}
+                      handleSelectPlan("ultra", false);
                     }} className="w-full py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-colors">
                       {uiLang === "hi" ? "प्लान चुनें" : "Choose Plan"}
                     </button>
@@ -11734,6 +11770,42 @@ Provide information about these plans and features. Persuade them to choose a pl
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showTrialAlert && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              className="bg-gray-900 border border-gray-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl shadow-emerald-500/10 flex flex-col items-center text-center relative"
+            >
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50 mb-4 animate-bounce">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">
+                {uiLang === "hi" ? "बधाई हो!" : "Congratulations!"}
+              </h3>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                {uiLang === "hi"
+                  ? "आप पहले से ही फ्री प्लान का लाभ उठा रहे हैं। आप हमारे सभी फीचर्स को फ्री में इस्तेमाल कर सकते हैं।"
+                  : "You are already enjoying the free plan. You can use all our features for free."}
+              </p>
+              <button
+                onClick={() => setShowTrialAlert(false)}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-600/30"
+              >
+                {uiLang === "hi" ? "ठीक है" : "Okay"}
+              </button>
             </motion.div>
           </motion.div>
         )}
