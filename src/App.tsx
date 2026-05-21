@@ -507,6 +507,26 @@ const FloatingStopButton = ({
     right: number;
   } | null>(null);
 
+
+  useEffect(() => {
+    if (!showLandingPage && chatInputRef.current) {
+      focusChatInput();
+    }
+  }, [showLandingPage]);
+
+  
+  useEffect(() => {
+    if (!showLandingPage) {
+      focusChatInput();
+      if (messages.length === 0) {
+        const currentBotName = selectedRole && selectedRole.id !== 'sales' ? demoBotName : userName;
+        const initialMsg = getInitialMessage(uiLang, currentBotName, selectedRole);
+        simulateInitialMessageStream(initialMsg);
+      }
+    }
+  }, [showLandingPage, messages.length]);
+
+
   useEffect(() => {
     if (!isPlaying) {
       setPosition(null);
@@ -3349,7 +3369,7 @@ export default function App({ clientId }: AppProps = {}) {
 
   const [freeTrialEnd, setFreeTrialEnd] = useState<number | null>(() => {
     try {
-      const saved = safeStorage.getItem("nard_free_trial_end_v2");
+      const saved = safeStorage.getItem("nard_free_trial_end_v6");
       return saved ? parseInt(saved, 10) : null;
     } catch {
       return null;
@@ -3358,7 +3378,7 @@ export default function App({ clientId }: AppProps = {}) {
 
   const [trialPlan, setTrialPlan] = useState<"basic" | "pro" | "ultra">(() => {
     return (
-      (safeStorage.getItem("nard_trial_plan_v2") as
+      (safeStorage.getItem("nard_trial_plan_v6") as
         | "basic"
         | "pro"
         | "ultra") || "ultra"
@@ -3435,8 +3455,8 @@ export default function App({ clientId }: AppProps = {}) {
 
   useEffect(() => {
     if (freeTrialEnd !== null) {
-      safeStorage.setItem("nard_free_trial_end_v2", freeTrialEnd.toString());
-      safeStorage.setItem("nard_trial_plan_v2", trialPlan);
+      safeStorage.setItem("nard_free_trial_end_v6", freeTrialEnd.toString());
+      safeStorage.setItem("nard_trial_plan_v6", trialPlan);
     }
   }, [freeTrialEnd, trialPlan]);
 
@@ -3887,6 +3907,7 @@ export default function App({ clientId }: AppProps = {}) {
     mimeType: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
   const liveSubtitlesRef = useRef<HTMLDivElement>(null);
 
@@ -4103,11 +4124,11 @@ export default function App({ clientId }: AppProps = {}) {
     setIsPendingFreeTrial(isFreeTrial);
     setTrialPlan(plan);
     setShowPathModal(false);
-    setShowLandingPage(false);
+    setShowLandingPage(false); focusChatInput();
     setShowClientPanel(true);
 
     if (isFreeTrial) {
-      setFreeTrialEnd(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+      setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
       try {
         safeStorage.removeItem("nard_final_offer_seen");
       } catch (e) {}
@@ -4124,22 +4145,22 @@ export default function App({ clientId }: AppProps = {}) {
     } else {
       try {
         const saved = safeStorage.getItem("nard_global_config");
-        let planPrice = 4999;
+        let planPrice = 1;
         let upiId = "nard@masterupi";
         let bi = "Nard Inc";
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (plan === "basic") planPrice = parsed.pricingBasic || 999;
-          if (plan === "pro") planPrice = parsed.pricingPro || 2499;
-          if (plan === "ultra") planPrice = parsed.pricingUltra || 4999;
+          if (plan === "basic") planPrice = 1;
+          if (plan === "pro") planPrice = 1;
+          if (plan === "ultra") planPrice = 1;
           upiId = parsed.paymentUpi || "nard@masterupi";
           bi = parsed.businessName || "Nard Inc";
         } else {
-          if (plan === "basic") planPrice = 999;
-          if (plan === "pro") planPrice = 2499;
-          if (plan === "ultra") planPrice = 4999;
+          if (plan === "basic") planPrice = 1;
+          if (plan === "pro") planPrice = 1;
+          if (plan === "ultra") planPrice = 1;
         }
-        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}&cu=INR&tr=TXN${Date.now()}&tn=Subscription`;
         setPaymentUrl(upiUrl);
         setSubscriptionStatus("pending_payment");
       } catch (e) {}
@@ -4166,11 +4187,11 @@ export default function App({ clientId }: AppProps = {}) {
     }
     
     setShowPathModal(false);
-    setShowLandingPage(false);
+    setShowLandingPage(false); focusChatInput();
     setShowClientPanel(true);
 
     if (isPendingFreeTrial) {
-      setFreeTrialEnd(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+      setFreeTrialEnd(Date.now() + 2 * 60 * 1000);
       try {
         safeStorage.removeItem("nard_final_offer_seen");
       } catch (e) {}
@@ -4187,22 +4208,22 @@ export default function App({ clientId }: AppProps = {}) {
     } else {
       try {
         const saved = safeStorage.getItem("nard_global_config");
-        let planPrice = 4999;
+        let planPrice = 1;
         let upiId = "nard@masterupi";
         let bi = "Nard Inc";
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (pendingTrialPlan === "basic") planPrice = parsed.pricingBasic || 999;
-          if (pendingTrialPlan === "pro") planPrice = parsed.pricingPro || 2499;
-          if (pendingTrialPlan === "ultra") planPrice = parsed.pricingUltra || 4999;
+          if (pendingTrialPlan === "basic") planPrice = 1;
+          if (pendingTrialPlan === "pro") planPrice = 1;
+          if (pendingTrialPlan === "ultra") planPrice = 1;
           upiId = parsed.paymentUpi || "nard@masterupi";
           bi = parsed.businessName || "Nard Inc";
         } else {
-          if (pendingTrialPlan === "basic") planPrice = 999;
-          if (pendingTrialPlan === "pro") planPrice = 2499;
-          if (pendingTrialPlan === "ultra") planPrice = 4999;
+          if (pendingTrialPlan === "basic") planPrice = 1;
+          if (pendingTrialPlan === "pro") planPrice = 1;
+          if (pendingTrialPlan === "ultra") planPrice = 1;
         }
-        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}&cu=INR&tr=TXN${Date.now()}&tn=Subscription`;
         setPaymentUrl(upiUrl);
         setSubscriptionStatus("pending_payment");
       } catch (e) {}
@@ -4566,7 +4587,7 @@ export default function App({ clientId }: AppProps = {}) {
         }
       }
       if (showLandingPageTempRef.current) {
-        setShowLandingPage(false);
+        setShowLandingPage(false); focusChatInput();
         showLandingPageTempRef.current = false;
         setAutoScrollLandingPage(false);
         if (postResponseLandingTimerRef.current) {
@@ -5047,6 +5068,7 @@ export default function App({ clientId }: AppProps = {}) {
   const handleLoadChat = (chat: SavedChat) => {
     setMessages(chat.messages);
     setCurrentChatId(chat.id);
+    focusChatInput();
     setIsHistoryOpen(false);
   };
 
@@ -5067,6 +5089,78 @@ export default function App({ clientId }: AppProps = {}) {
     }
   };
 
+
+  const simulateInitialMessageStream = async (initialMsg: string) => {
+    const newModelMsgId = Date.now().toString();
+    setMessages([{ id: newModelMsgId, role: 'model', text: '' }]);
+    setIsStreaming(true);
+    setIsGeneratingAudio(newModelMsgId);
+
+    let fullText = '';
+    let currentChunk = '';
+    let globalStartIndex = 0;
+    let hasStartedPlaying = false;
+
+    const tokens = initialMsg.split(/(\s+|[.,!?।]+)/);
+
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      if (!token) continue;
+
+      fullText += token;
+      currentChunk += token;
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === newModelMsgId ? { ...m, text: fullText } : m
+        )
+      );
+
+      let shouldChunk = false;
+      let splitIndex = currentChunk.length;
+
+      const isFirstChunk = globalStartIndex === 0;
+      const premiumChunkLength = isFirstChunk ? 150 : 2500;
+      const minChunkLength = premiumChunkLength;
+
+      if (currentChunk.length >= minChunkLength) {
+        const matches = [...currentChunk.matchAll(/[.।?!,]+(\s+|$)/g)];
+        if (matches.length > 0) {
+          const lastMatch = matches[matches.length - 1];
+          splitIndex = lastMatch.index + lastMatch[0].length;
+          shouldChunk = true;
+        } else if (currentChunk.length > minChunkLength * 2) {
+          shouldChunk = true;
+          const lastSpace = currentChunk.lastIndexOf(' ');
+          splitIndex = lastSpace > 0 ? lastSpace + 1 : currentChunk.length;
+        }
+      }
+
+      if (shouldChunk) {
+        const textToPlay = currentChunk.substring(0, splitIndex);
+        if (textToPlay.trim().length > 0) {
+          if (!hasStartedPlaying) {
+            stopMessageAudio();
+            hasStartedPlaying = true;
+          }
+          queuePremiumAudioChunk(textToPlay, newModelMsgId, globalStartIndex);
+          globalStartIndex += textToPlay.length;
+        }
+        currentChunk = currentChunk.substring(splitIndex);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+
+    if (currentChunk.trim().length > 0) {
+      if (!hasStartedPlaying) {
+        stopMessageAudio();
+      }
+      queuePremiumAudioChunk(currentChunk, newModelMsgId, globalStartIndex);
+    }
+    setIsStreaming(false);
+  };
+
+
   const handleNewChat = () => {
     stopMessageAudio();
     if (isVoiceTyping) {
@@ -5074,12 +5168,11 @@ export default function App({ clientId }: AppProps = {}) {
     }
     const currentBotName = selectedRole && selectedRole.id !== "sales" ? demoBotName : userName;
     const initialMsg = getInitialMessage(uiLang, currentBotName, selectedRole);
-    setMessages([
-      { id: Date.now().toString(), role: "model", text: initialMsg },
-    ]);
+    simulateInitialMessageStream(initialMsg);
     setCurrentChatId(null);
     setIsHistoryOpen(false);
     setIsLive(false); // Make sure live is also reset
+    focusChatInput();
   };
 
   const handleTogglePin = (e: React.MouseEvent, id: string) => {
@@ -5407,7 +5500,7 @@ export default function App({ clientId }: AppProps = {}) {
             showPathModalTempRef.current = false;
             setAutoScrollModal(false);
             setSelectedPath(null);
-            setShowLandingPage(false);
+            setShowLandingPage(false); focusChatInput();
             showLandingPageTempRef.current = false;
             setAutoScrollLandingPage(false);
             setShowFullScreenFreeTrial(true);
@@ -5426,7 +5519,7 @@ export default function App({ clientId }: AppProps = {}) {
               showPathModalTempRef.current = false;
               setAutoScrollModal(false);
               setSelectedPath(null);
-              setShowLandingPage(false);
+              setShowLandingPage(false); focusChatInput();
               showLandingPageTempRef.current = false;
               setAutoScrollLandingPage(false);
               setShowFullScreenFreeTrial(false);
@@ -5455,7 +5548,7 @@ export default function App({ clientId }: AppProps = {}) {
            }
         }
         if (showLandingPageTempRef.current) {
-           setShowLandingPage(false);
+           setShowLandingPage(false); focusChatInput();
            showLandingPageTempRef.current = false;
            setAutoScrollLandingPage(false);
            if (postResponseLandingTimerRef.current) {
@@ -6305,9 +6398,9 @@ For Floating Icon Integration, explain the ease of integration with examples:
 - For Mobile Apps: Seamlessly integrate the chatbot into iOS/Android apps using our lightweight SDKs or a simple WebView component.
 
 Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
-- Basic Plan (Lok Mitra): ₹999/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
-- Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
-- Ultra Plan (Commerce Expert): ₹4999/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Basic Plan (Lok Mitra): ₹1/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Pro Plan (Business Manager): ₹1/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Ultra Plan (Commerce Expert): ₹1/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
 
 Provide information about these plans and features. Persuade them to choose a plan and understand the utility, flexibility, and 24/7 availability of Nard for scaling their business.`;
         }
@@ -6540,6 +6633,28 @@ Provide information about these plans and features. Persuade them to choose a pl
       }
     }
   };
+
+  
+  const focusChatInput = () => {
+    const el = document.getElementById('chat-textarea');
+    if (el) {
+      el.focus({ preventScroll: true });
+      el.click();
+    }
+    if (chatInputRef.current) {
+      chatInputRef.current.focus({ preventScroll: true });
+      chatInputRef.current.click();
+    }
+    setTimeout(() => {
+      const el2 = document.getElementById('chat-textarea');
+      if (el2) el2.focus({ preventScroll: true });
+    }, 50);
+    setTimeout(() => {
+      const el3 = document.getElementById('chat-textarea');
+      if (el3) el3.focus({ preventScroll: true });
+    }, 200);
+  };
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -7010,9 +7125,9 @@ For Floating Icon Integration, explain the ease of integration with examples:
 - For Mobile Apps: Seamlessly integrate the chatbot into iOS/Android apps using our lightweight SDKs or a simple WebView component.
 
 Here are the pricing plans available for BOTH the Nard Hosted Platform and Floating Icon Integration:
-- Basic Plan (Lok Mitra): ₹999/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
-- Pro Plan (Business Manager): ₹2499/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
-- Ultra Plan (Commerce Expert): ₹4999/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Basic Plan (Lok Mitra): ₹1/year. Includes Real-time voice alerts (Basic), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Pro Plan (Business Manager): ₹1/year. Includes Real-time voice alerts (Pro), E-Maitri exclusive jingle, Unlimited SMS sync.
+- Ultra Plan (Commerce Expert): ₹1/year. Includes Real-time voice alerts (Ultra), E-Maitri exclusive jingle, Unlimited SMS sync.
 
 CRITICAL INSTRUCTION FOR TOOL CALLS: When a user asks about plans or pricing, you MUST FIRST ask them to clarify if they want a floating icon for their app/website or if they want to start their business using Nard's hosted platform. DO NOT call the "show_plan_widget" tool until they have confirmed their choice. Once they confirm, then you MUST CALL THE "show_plan_widget" TOOL as part of your answer.
 
@@ -7646,6 +7761,8 @@ Provide information about these plans and features. Persuade them to choose a pl
     if (returnToLandingOnExit) {
       setShowLandingPage(true);
       setReturnToLandingOnExit(false);
+    } else {
+      focusChatInput();
     }
 
     setHasLiveStarted(false);
@@ -7810,7 +7927,7 @@ Provide information about these plans and features. Persuade them to choose a pl
           let totalValue = 0;
           for (let i = 0; i < numBins; i++) {
             const dataIndex = Math.floor((i / numBins) * 64);
-            totalValue += dataArray[dataIndex] || 0;
+            totalValue += dataArray[dataIndex] || 1;
           }
           const averageIntensity = totalValue / numBins / 255;
           const activeScale = Math.min(
@@ -8205,28 +8322,26 @@ Provide information about these plans and features. Persuade them to choose a pl
                   onClick={() => {
                     try {
                       const saved = safeStorage.getItem("nard_global_config");
-                      let planPrice = 4999;
+                      let planPrice = 1;
                       let upiId = "nard@masterupi";
                       let bi = "Nard Inc";
                       if (saved) {
                         const parsed = JSON.parse(saved);
-                        if (trialPlan === "basic") planPrice = parsed.pricingBasic || 999;
-                        if (trialPlan === "pro") planPrice = parsed.pricingPro || 2499;
-                        if (trialPlan === "ultra") planPrice = parsed.pricingUltra || 4999;
+                        if (trialPlan === "basic") planPrice = 1;
+                        if (trialPlan === "pro") planPrice = 1;
+                        if (trialPlan === "ultra") planPrice = 1;
                         upiId = parsed.paymentUpi || "nard@masterupi";
                         bi = parsed.businessName || "Nard Inc";
                       } else {
-                        if (trialPlan === "basic") planPrice = 999;
-                        if (trialPlan === "pro") planPrice = 2499;
-                        if (trialPlan === "ultra") planPrice = 4999;
+                        if (trialPlan === "basic") planPrice = 1;
+                        if (trialPlan === "pro") planPrice = 1;
+                        if (trialPlan === "ultra") planPrice = 1;
                       }
-                      const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+                      const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}&cu=INR&tr=TXN${Date.now()}&tn=Subscription`;
                       setPaymentUrl(upiUrl);
                       setSubscriptionStatus("pending_payment");
                       // Try to launch UPI intent directly for mobile
-                      const a = document.createElement("a");
-                      a.href = upiUrl;
-                      a.click();
+                      window.location.href = upiUrl;
                     } catch (e) {}
                   }}
                   className="w-full py-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
@@ -8347,7 +8462,7 @@ Provide information about these plans and features. Persuade them to choose a pl
 
             {/* Close Admin Button */}
             <button
-              onClick={() => setShowAdminPanel(false)}
+              onClick={() => { setShowAdminPanel(false); focusChatInput(); }}
               className="absolute top-4 right-4 z-[10020] p-3 rounded-full bg-rose-900/50 text-rose-400 hover:bg-rose-900 transition-colors shadow-lg"
             >
               <X size={24} />
@@ -8374,7 +8489,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                 setSubscriptionStatus("inactive");
                 setFreeTrialEnd(null);
                 try {
-                  safeStorage.removeItem("nard_free_trial_end_v2");
+                  safeStorage.removeItem("nard_free_trial_end_v6");
                 } catch (e) {}
               }}
               onStartFreeTrial={(selectedPlan) => {
@@ -8387,7 +8502,7 @@ Provide information about these plans and features. Persuade them to choose a pl
 
             {/* Close Client Panel Button */}
             <button
-              onClick={() => setShowClientPanel(false)}
+              onClick={() => { setShowClientPanel(false); focusChatInput(); }}
               className="absolute top-4 right-4 z-[10020] p-3 rounded-full bg-gray-800/80 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors shadow-lg"
             >
               <X size={24} />
@@ -8900,7 +9015,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                             {uiLang === "hi" ? "लोक मित्र (Basic)" : "Basic"}
                           </h4>
                           <div className="text-4xl font-black text-gray-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
-                            ₹999
+                            ₹1
                             <span className="text-lg text-gray-500 font-bold pb-1">
                               {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                             </span>
@@ -8946,7 +9061,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                             {uiLang === "hi" ? "बिजनेस मैनेजर (Pro)" : "Pro"}
                           </h4>
                           <div className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)] flex items-end gap-2 flex-wrap">
-                            ₹2499
+                            ₹1
                             <span className="text-lg text-gray-400 font-bold pb-1">
                               {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                             </span>
@@ -8999,7 +9114,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                               : "Ultra"}
                           </h4>
                           <div className="text-4xl font-black text-sky-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
-                            ₹4999
+                            ₹1
                             <span className="text-lg text-gray-500 font-bold pb-1">
                               {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                             </span>
@@ -9306,13 +9421,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                               demoBotName || role.name,
                               role,
                             );
-                            setMessages([
-                              {
-                                id: Date.now().toString(),
-                                role: "model",
-                                text: initialMsg,
-                              },
-                            ]);
+                            simulateInitialMessageStream(initialMsg);
                             setCurrentChatId(null);
                             setSelectedRole({
                               ...role,
@@ -9323,7 +9432,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                               dropShadow: brandTheme.dropShadow,
                             });
                             setReturnToLandingOnExit(true);
-                            setShowLandingPage(false);
+                            setShowLandingPage(false); focusChatInput();
                             setShowPathModal(false);
                             setIsLive(true);
                             if (!isSessionActiveRef.current) {
@@ -9508,17 +9617,11 @@ Provide information about these plans and features. Persuade them to choose a pl
                   userName,
                   salesRole,
                 );
-                setMessages([
-                  {
-                    id: Date.now().toString(),
-                    role: "model",
-                    text: initialMsg,
-                  },
-                ]);
+                simulateInitialMessageStream(initialMsg);
                 setCurrentChatId(null);
                 setSelectedRole(salesRole);
                 setReturnToLandingOnExit(false);
-                setShowLandingPage(false);
+                setShowLandingPage(false); focusChatInput();
                 setShowPathModal(false);
                 setShowSettings(false);
                 setShowAdminPanel(false);
@@ -9933,7 +10036,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                     {t.settings || "Settings"}
                   </h2>
                   <button
-                    onClick={() => setShowSettings(false)}
+                    onClick={() => { setShowSettings(false); focusChatInput(); }}
                     className="p-2 text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
                   >
                     <X size={20} />
@@ -11102,7 +11205,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                     )
                   )}
 
-                  <textarea
+                  <textarea id="chat-textarea" ref={chatInputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -11119,6 +11222,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                     } ${isVoiceTyping && !input ? "opacity-0" : "opacity-100"}`}
                     rows={1}
                     disabled={isLoading}
+                    autoFocus={!showLandingPage}
                   />
                   <div className="absolute right-4 bottom-3 flex gap-2 z-30">
                     {!input.trim() && !selectedImage && !isLoading && (
@@ -11571,7 +11675,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <p className="text-gray-400 text-sm">{uiLang === "hi" ? "शुरुआती लोगों के लिए" : "For beginners"}</p>
                     </div>
                     <div className="mb-6">
-                      <span className="text-3xl font-black text-white">₹999</span>
+                      <span className="text-3xl font-black text-white">₹1</span>
                       <span className="text-gray-400 text-sm">/mo</span>
                     </div>
                     <ul className="flex-1 space-y-3 mb-6">
@@ -11599,7 +11703,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <p className="text-blue-200 text-sm">{uiLang === "hi" ? "बढ़ते बिज़नेस के लिए" : "For growing businesses"}</p>
                     </div>
                     <div className="mb-6">
-                      <span className="text-3xl font-black text-white">₹2499</span>
+                      <span className="text-3xl font-black text-white">₹1</span>
                       <span className="text-blue-200 text-sm">/mo</span>
                     </div>
                     <ul className="flex-1 space-y-3 mb-6">
@@ -11623,7 +11727,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                       <p className="text-gray-400 text-sm">{uiLang === "hi" ? "सभी फीचर्स के साथ" : "Full power enabled"}</p>
                     </div>
                     <div className="mb-6">
-                      <span className="text-3xl font-black text-white">₹4999</span>
+                      <span className="text-3xl font-black text-white">₹1</span>
                       <span className="text-gray-400 text-sm">/mo</span>
                     </div>
                     <ul className="flex-1 space-y-3 mb-6">
@@ -11711,8 +11815,8 @@ Provide information about these plans and features. Persuade them to choose a pl
                 <div className="w-full bg-red-950/30 border border-red-500/30 rounded-2xl p-3 mb-8 animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.1)]">
                   <p className="text-red-300 font-bold text-sm">
                     {uiLang === "hi"
-                      ? "🔥 अगले 1 घंटे में सब्सक्राइब करने पर ₹500 की सीधी छूट!"
-                      : "🔥 Flat ₹500 discount if you subscribe in the next 1 hour!"}
+                      ? "🔥 अगले 1 घंटे में सब्सक्राइब करने पर ₹1 की सीधी छूट!"
+                      : "🔥 Flat ₹1 discount if you subscribe in the next 1 hour!"}
                   </p>
                 </div>
 
@@ -11723,27 +11827,25 @@ Provide information about these plans and features. Persuade them to choose a pl
                       setIsFinalOfferSeen(true);
                       try {
                         const saved = safeStorage.getItem("nard_global_config");
-                        let planPrice = 4999;
+                        let planPrice = 1;
                         let upiId = "nard@masterupi";
                         let bi = "Nard Inc";
                         if (saved) {
                           const parsed = JSON.parse(saved);
-                          if (trialPlan === "basic") planPrice = parsed.pricingBasic || 999;
-                          if (trialPlan === "pro") planPrice = parsed.pricingPro || 2499;
-                          if (trialPlan === "ultra") planPrice = parsed.pricingUltra || 4999;
+                          if (trialPlan === "basic") planPrice = 1;
+                          if (trialPlan === "pro") planPrice = 1;
+                          if (trialPlan === "ultra") planPrice = 1;
                           upiId = parsed.paymentUpi || "nard@masterupi";
                           bi = parsed.businessName || "Nard Inc";
                         } else {
-                          if (trialPlan === "basic") planPrice = 999;
-                          if (trialPlan === "pro") planPrice = 2499;
-                          if (trialPlan === "ultra") planPrice = 4999;
+                          if (trialPlan === "basic") planPrice = 1;
+                          if (trialPlan === "pro") planPrice = 1;
+                          if (trialPlan === "ultra") planPrice = 1;
                         }
-                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}`;
+                        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(bi)}&am=${planPrice}&cu=INR&tr=TXN${Date.now()}&tn=Subscription`;
                         setPaymentUrl(upiUrl);
                         setSubscriptionStatus("pending_payment");
-                        const a = document.createElement("a");
-                        a.href = upiUrl;
-                        a.click();
+                        window.location.href = upiUrl;
                       } catch (e) {}
                       try {
                         safeStorage.setItem("nard_final_offer_seen", "true");
@@ -12252,7 +12354,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                         {uiLang === "hi" ? "लोक मित्र (Basic)" : "Basic"}
                       </h4>
                       <div className="text-4xl font-black text-gray-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
-                        ₹999
+                        ₹1
                         <span className="text-lg text-gray-500 font-bold pb-1">
                           {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                         </span>
@@ -12308,7 +12410,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                         {uiLang === "hi" ? "बिजनेस मैनेजर (Pro)" : "Pro"}
                       </h4>
                       <div className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(234,179,8,0.3)] flex items-end gap-2 flex-wrap">
-                        ₹2499
+                        ₹1
                         <span className="text-lg text-gray-400 font-bold pb-1">
                           {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                         </span>
@@ -12369,7 +12471,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                         {uiLang === "hi" ? "कॉमर्स एक्सपर्ट (Ultra)" : "Ultra"}
                       </h4>
                       <div className="text-4xl font-black text-sky-300 mb-6 drop-shadow-sm flex items-end gap-2 flex-wrap">
-                        ₹4999
+                        ₹1
                         <span className="text-lg text-gray-500 font-bold pb-1">
                           {uiLang === "hi" ? "प्रति वर्ष" : "per year"}
                         </span>
