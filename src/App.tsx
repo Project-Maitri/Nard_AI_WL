@@ -5955,8 +5955,8 @@ export default function App({ clientId }: AppProps = {}) {
             audioContextRef.current.createMediaElementSource(
               premiumAudioRef.current,
             );
+          premiumAudioSourceRef.current.connect(audioContextRef.current.destination);
           premiumAudioSourceRef.current.connect(analyserRef.current);
-          analyserRef.current.connect(audioContextRef.current.destination);
         } catch (e) {
           console.warn("Failed to connect audio source", e);
         }
@@ -6849,7 +6849,6 @@ Provide information about these plans and features. Persuade them to choose a pl
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          channelCount: 2,
         },
       });
       mediaStreamRef.current = stream;
