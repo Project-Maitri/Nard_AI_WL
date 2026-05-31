@@ -37,7 +37,7 @@ import {
   VolumeX,
   BrainCircuit,
   Zap,
-  MessageSquare,
+  SquarePen,
   Info,
   Loader2,
   Users,
@@ -76,7 +76,7 @@ import {
   LineChart,
   Activity,
   BarChart,
-  MessageCircle,
+  SquarePen,
   Briefcase,
   CreditCard,
   ShieldAlert,
@@ -3254,6 +3254,16 @@ const FreeTrialCountdown = ({
 interface AppProps {
   clientId?: string;
 }
+
+
+const CustomComposeIcon = ({ size = 24, className = '' }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <g transform="translate(0.5, 0.5)">
+      <path d="M14 6 C8 4, 3 8, 4 14 C5 20, 11 21, 16 17" />
+      <path d="M10 11 L16 5 A 1.5 1.5 0 0 1 18 7 L12 13 L9.5 13.5 Z" />
+    </g>
+  </svg>
+);
 
 export default function App({ clientId }: AppProps = {}) {
   const [selectedRole, setSelectedRole] = useState<{
@@ -8555,9 +8565,12 @@ Provide information about these plans and features. Persuade them to choose a pl
                   <div ref={leftMenuRef} className="relative">
                     <button
                       onClick={() => setShowLeftMenu(!showLeftMenu)}
-                      className="p-2 sm:p-2.5 rounded-full bg-gray-900/80 border border-gray-800 hover:bg-gray-800 transition-colors shadow-md text-gray-300 hover:text-white shrink-0"
+                      className="p-1 sm:p-2 rounded-lg hover:bg-gray-800/50 transition-colors text-gray-300 hover:text-white shrink-0"
                     >
-                      <Menu size={20} />
+                      <div className="flex flex-col gap-[5px] w-[20px] h-[20px] items-center justify-center">
+                        <div className="w-full h-[3px] bg-current rounded-full" />
+                        <div className="w-full h-[3px] bg-current rounded-full" />
+                      </div>
                     </button>
                     <AnimatePresence>
                       {showLeftMenu && (
@@ -8786,7 +8799,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                   <div
                     className={`w-20 h-20 rounded-[32px] flex items-center justify-center mb-6 bg-gradient-to-br ${brandTheme.color} shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500`}
                   >
-                    <MessageCircle className="text-white" size={36} />
+                    <CustomComposeIcon className="text-white" size={36} />
                   </div>
                   <h3 className="text-2xl font-black text-white mb-3 tracking-wide font-mukta">
                     {lT.feat1Title}
@@ -9878,10 +9891,10 @@ Provide information about these plans and features. Persuade them to choose a pl
             >
               <button
                 onClick={handleNewChat}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-800 border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700 shadow-md transition-all"
+                className="flex items-center justify-center text-gray-300 hover:text-white hover:scale-110 transition-all"
                 title={t.newChat}
               >
-                <MessageSquare size={18} />
+                <CustomComposeIcon size={22} />
               </button>
 
               <button
@@ -9892,10 +9905,13 @@ Provide information about these plans and features. Persuade them to choose a pl
                     setShowMoreMenu(!showMoreMenu);
                   }
                 }}
-                className={`flex items-center justify-center w-9 h-9 rounded-full transition-all ${showMoreMenu ? "bg-sky-900/50 text-sky-400 border-sky-600" : "bg-gray-800 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700 shadow-md"} border`}
+                className={`p-1 sm:p-2 rounded-lg transition-all ${showMoreMenu ? "bg-sky-900/50 text-sky-400" : "text-gray-300 hover:text-white hover:bg-gray-800/50"} shrink-0`}
                 title={t.moreOptions}
               >
-                <Menu size={18} />
+                <div className="flex flex-col gap-[5px] w-[20px] h-[20px] items-center justify-center">
+                  <div className="w-full h-[3px] bg-current rounded-full" />
+                  <div className="w-full h-[3px] bg-current rounded-full" />
+                </div>
               </button>
 
               <AnimatePresence>
@@ -9914,8 +9930,8 @@ Provide information about these plans and features. Persuade them to choose a pl
                         }}
                         className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-gray-800 shadow-md transition-colors text-left group"
                       >
-                        <div className="p-2 bg-sky-900/40 rounded-lg text-sky-400 group-hover:bg-sky-800 transition-colors">
-                          <MessageSquare size={16} />
+                        <div className="text-sky-400 group-hover:text-sky-300 transition-colors">
+                          <CustomComposeIcon size={20} />
                         </div>
                         <span className="text-sm font-medium text-gray-300 group-hover:text-gray-100">
                           {t.chatHistory}
@@ -10772,7 +10788,7 @@ Provide information about these plans and features. Persuade them to choose a pl
                              </div>
 
                              <div className="bg-black/50 backdrop-blur-xl px-6 py-4 border border-fuchsia-500/40 rounded-2xl shadow-[0_0_20px_rgba(217,70,239,0.3)] flex flex-col items-center">
-                               <MessageSquare className="w-8 h-8 text-fuchsia-400 mb-2" />
+                               <CustomComposeIcon className="text-fuchsia-400 mb-2" size={32} />
                                <span className="text-fuchsia-100 font-bold text-lg md:text-2xl uppercase tracking-wider">{uiLang === "hi" ? "आवाज़ आधारित AI" : "Voice-driven AI"}</span>
                              </div>
                          </motion.div>
@@ -11430,7 +11446,7 @@ Provide information about these plans and features. Persuade them to choose a pl
               >
                 <div className="p-4 border-b border-gray-800 flex items-center justify-between bg-gray-900">
                   <h2 className="text-lg font-bold text-gray-200 flex items-center gap-2">
-                    <MessageSquare size={20} className="text-sky-400" />
+                    <CustomComposeIcon size={20} className="text-sky-400" />
                     {t.chatHistory}
                   </h2>
                   <button
@@ -11444,9 +11460,9 @@ Provide information about these plans and features. Persuade them to choose a pl
                 <div className="p-4">
                   <button
                     onClick={handleNewChat}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-sky-900/50 hover:bg-sky-800/60 text-sky-300 border border-sky-800 rounded-xl transition-colors font-bold shadow-lg active:scale-95 transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-3 text-sky-400 hover:text-sky-300 transition-colors font-bold active:scale-95 transition-all"
                   >
-                    <MessageSquare size={18} />
+                    <CustomComposeIcon size={22} />
                     {t.newChat}
                   </button>
                 </div>

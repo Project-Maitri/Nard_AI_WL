@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FAM AI</string>
+    <string name="title_activity_main">FAM AI</string>
+    <string name="package_name">com.fam.ai</string>
+    <string name="custom_url_scheme">com.fam.ai</string>
+</resources>
